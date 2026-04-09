@@ -1,6 +1,6 @@
 // =========================================================================
 // SUA URL DE CONEXÃO ATUALIZADA
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxhKAFvVx-khwxRVwCyUYm_0WvzInGX65oFOaUcfFkTund3O3NYXuK5lz6cTN9j46Evrw/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzbJJ7eTembJFbAaBxI7aFCo87lN_-RBIsb5HYgapo1YpEMCVcKSUlGza_tOGPzG9tAQw/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
