@@ -8,10 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let transactions = [];
     let termoPesquisa = "";
 
-    // --- 1. CONTROLE DE ACESSO (LOGIN) ---
+    // Elementos da Interface
     const loginScreen = document.getElementById('loginScreen');
     const appScreen = document.getElementById('appScreen');
+    const editModal = document.getElementById('editModal');
+    const closeModalButtons = document.querySelectorAll('.close-modal');
 
+    // --- 1. SISTEMA DE LOGIN ---
     if (localStorage.getItem('sysIsLoggedIn') === 'true') {
         if(loginScreen) loginScreen.style.display = 'none';
         if(appScreen) appScreen.style.display = 'block';
@@ -23,8 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLogin.onclick = () => {
             const u = document.getElementById('loginUser').value;
             const p = document.getElementById('loginPass').value;
-            // Credenciais conforme seu HTML
-            if (u === 'admin' && p === 'admin' || u === 'pedro' && p === 'mestre') {
+            if ((u === 'admin' && p === 'admin') || (u === 'pedro' && p === 'mestre')) {
                 localStorage.setItem('sysIsLoggedIn', 'true');
                 location.reload();
             } else {
@@ -33,12 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    document.getElementById('btnLogout').onclick = () => {
-        if(confirm("Deseja sair do sistema?")) {
-            localStorage.removeItem('sysIsLoggedIn');
-            location.reload();
-        }
-    };
+    const btnLogout = document.getElementById('btnLogout');
+    if(btnLogout) {
+        btnLogout.onclick = () => {
+            if(confirm("Deseja encerrar a sessão?")) {
+                localStorage.removeItem('sysIsLoggedIn');
+                location.reload();
+            }
+        };
+    }
 
     // --- 2. BARRA DE PESQUISA FUNCIONAL ---
     const searchInput = document.getElementById('searchInput');
@@ -54,21 +59,23 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
-            mediators = data.equipe || [];
-            transactions = data.financeiro || [];
-            renderAll();
+            if (data && data.equipe) {
+                mediators = data.equipe;
+                transactions = data.financeiro || [];
+                renderAll();
+            }
         } catch (e) {
-            console.error("Erro ao conectar com a planilha.");
+            console.log("Erro na conexão com o banco de dados.");
         }
     }
 
-    // --- 4. RENDERIZAR EQUIPE (LÓGICA ILIMITADA E PESQUISA) ---
+    // --- 4. RENDERIZAR EQUIPE (LÓGICA ILIMITADA E FILTRO) ---
     function renderMediators() {
         const list = document.getElementById('mediatorList');
         if(!list) return;
         list.innerHTML = '';
         
-        // Filtra a lista com base no que foi digitado na busca
+        // Filtro de pesquisa
         const filtrados = mediators.filter(m => 
             (m.name || "").toLowerCase().includes(termoPesquisa) || 
             (m.role || "").toLowerCase().includes(termoPesquisa)
@@ -77,15 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
         filtrados.forEach(user => {
             const cargo = (user.role || "").toUpperCase();
             
-            // REGRA: SUPORTE E AUXILIAR SÃO ILIMITADOS
-            const isIlimitado = cargo.includes("SUPORTE") || cargo.includes("AUXILIAR") || cargo.includes("SUP") || cargo.includes("AUX");
+            // REGRA: SUPORTE E AUXILIAR SÃO ILIMITADOS NO VISUAL
+            const isIlimitado = cargo.includes("SUP") || cargo.includes("AUX");
             const isExp = !isIlimitado && (parseInt(user.daysLeft) <= 0);
 
             const textoTempo = isIlimitado ? "ILIMITADO" : (isExp ? "EXPIRADO" : user.daysLeft + " dias");
             const corTempo = isExp ? "text-red" : "text-green";
 
             const row = document.createElement('div');
-            row.className = 'table-row'; // Mantendo sua classe do CSS
+            row.className = 'table-row';
             row.innerHTML = `
                 <div class="row-info">
                     <div>
@@ -106,19 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
             list.appendChild(row);
         });
 
-        // Atualiza os números nos seus Stat Cards
+        // Atualização de contadores (Stat Cards)
         if(document.getElementById('totalCount')) document.getElementById('totalCount').innerText = filtrados.length;
         if(document.getElementById('alertCount')) {
             const expCount = filtrados.filter(m => {
                 const c = (m.role || "").toUpperCase();
-                const ilim = c.includes("SUPORTE") || c.includes("AUXILIAR") || c.includes("SUP") || c.includes("AUX");
-                return !ilim && m.daysLeft <= 0;
+                return !c.includes("SUP") && !c.includes("AUX") && m.daysLeft <= 0;
             }).length;
             document.getElementById('alertCount').innerText = expCount;
         }
     }
 
-    // --- 5. EVENTOS DE CLIQUE NOS BOTÕES (RENOVAR, CARGO, EXCLUIR) ---
+    // --- 5. EVENTOS DE CLIQUE (BOTÕES E MODAL) ---
     const listContainer = document.getElementById('mediatorList');
     if (listContainer) {
         listContainer.onclick = async (e) => {
@@ -135,15 +141,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 await syncToCloud("UPDATE_EQUIPE");
             } 
             else if (btn.classList.contains('btn-cargo')) {
-                const novo = prompt("Novo Cargo para " + u.name + ":", u.role);
-                if(novo) { 
-                    u.role = novo.toUpperCase(); 
-                    renderMediators(); 
-                    await syncToCloud("UPDATE_EQUIPE"); 
-                }
+                // Abre o Edit Modal do seu HTML
+                document.getElementById('editUserId').value = u.id;
+                document.getElementById('editName').value = u.name;
+                document.getElementById('editRole').value = u.role;
+                document.getElementById('editDays').value = u.daysLeft;
+                editModal.style.display = 'flex';
             } 
             else if (btn.classList.contains('btn-excluir')) {
-                if(confirm("Bloquear " + u.name + " e enviar para lista negra?")) {
+                if(confirm("Bloquear " + u.name + " e mover para lista negra?")) {
                     const nomeDeletado = u.name;
                     mediators = mediators.filter(m => m.id != id);
                     renderMediators();
@@ -153,11 +159,37 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Salvar edições do Modal
+    const btnSaveEdit = document.getElementById('btnSaveEdit');
+    if(btnSaveEdit) {
+        btnSaveEdit.onclick = async () => {
+            const id = document.getElementById('editUserId').value;
+            const u = mediators.find(m => m.id == id);
+            if(u) {
+                u.name = document.getElementById('editName').value;
+                u.role = document.getElementById('editRole').value;
+                u.daysLeft = document.getElementById('editDays').value;
+                editModal.style.display = 'none';
+                renderMediators();
+                await syncToCloud("UPDATE_EQUIPE");
+            }
+        };
+    }
+
+    // Fechar modais
+    closeModalButtons.forEach(btn => {
+        btn.onclick = () => {
+            if(editModal) editModal.style.display = 'none';
+            if(document.getElementById('addModal')) document.getElementById('addModal').style.display = 'none';
+            if(document.getElementById('idModal')) document.getElementById('idModal').style.display = 'none';
+        }
+    });
+
     // --- 6. SINCRONIZAR FORMS (BOTÃO AZUL) ---
     const btnSync = document.getElementById('btnSyncDrive');
     if(btnSync) {
         btnSync.onclick = async () => {
-            btnSync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SINCRONIZANDO...';
+            btnSync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AGUARDE...';
             await loadData();
             btnSync.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> SINCRONIZAR FORMS';
         };
@@ -165,19 +197,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 7. COMUNICAÇÃO COM O GOOGLE ---
     async function syncToCloud(type, extraData = null) {
+        // Proteção para não limpar o banco se a lista local falhar
+        if (type === "UPDATE_EQUIPE" && mediators.length === 0) return;
+
         let body = { type, data: mediators };
         if (type === "DELETE_MEMBER") body = { type, deletedName: extraData.name, data: mediators };
         
         try {
             await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
-        } catch(e) { console.error("Erro ao sincronizar com o Google Sheets."); }
+        } catch(e) { console.log("Erro ao sincronizar."); }
     }
 
-    // --- 8. NAVEGAÇÃO E FINANCEIRO ---
-    function renderAll() {
-        renderMediators();
-        updateFinanceUI();
-    }
+    // --- 8. NAVEGAÇÃO DE ABAS ---
+    const menuLinks = {
+        'navMediators': 'viewMediators',
+        'navDashboard': 'viewDashboard',
+        'navReports': 'viewReports'
+    };
+
+    Object.keys(menuLinks).forEach(id => {
+        const btn = document.getElementById(id);
+        if(btn) {
+            btn.onclick = () => {
+                // Esconde todas as views
+                Object.values(menuLinks).forEach(v => {
+                    const el = document.getElementById(v);
+                    if(el) el.style.display = 'none';
+                });
+                // Remove active de todos os nav-items
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                
+                // Ativa a view correta
+                document.getElementById(menuLinks[id]).style.display = 'block';
+                btn.classList.add('active');
+                document.getElementById('pageTitle').innerText = btn.innerText.trim();
+            };
+        }
+    });
 
     function updateFinanceUI() {
         const total = transactions.reduce((acc, t) => acc + t.value, 0);
@@ -185,28 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if(display) display.innerText = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
     }
 
-    const navs = {
-        'navMediators': 'viewMediators',
-        'navDashboard': 'viewDashboard',
-        'navReports': 'viewReports'
-    };
+    function renderAll() {
+        renderMediators();
+        updateFinanceUI();
+    }
 
-    Object.keys(navs).forEach(navId => {
-        const btn = document.getElementById(navId);
-        if(btn) {
-            btn.onclick = () => {
-                Object.values(navs).forEach(v => document.getElementById(v).style.display = 'none');
-                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                
-                document.getElementById(navs[navId]).style.display = 'block';
-                btn.classList.add('active');
-                document.getElementById('pageTitle').innerText = btn.innerText.trim();
-            };
-        }
-    });
-
-    // --- 9. AUTO-REFRESH (15s) ---
+    // Auto-refresh a cada 20 segundos
     setInterval(() => {
         if (localStorage.getItem('sysIsLoggedIn') === 'true') loadData();
-    }, 15000);
+    }, 20000);
 });
