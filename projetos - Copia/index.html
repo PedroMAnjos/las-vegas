@@ -23,8 +23,8 @@
                 <label>Senha</label>
                 <input type="password" id="loginPass" class="custom-input" placeholder="admin">
             </div>
-            <button id="btnLogin" class="save-btn">ACESSAR SISTEMA</button>
-            <p id="loginError" style="color:#ff4d4d; display:none; margin-top:10px;">Credenciais inválidas.</p>
+            <button id="btnLogin" class="save-btn" style="margin-top: 20px;">ACESSAR SISTEMA</button>
+            <p id="loginError" style="color:#ff4d4d; font-size:0.8rem; margin-top:15px; display:none;">Credenciais inválidas.</p>
         </div>
     </div>
 
@@ -32,7 +32,10 @@
         <div class="main-layout">
             
             <nav class="side-nav">
-                <div class="nav-brand"><i class="fa-solid fa-shield-halved"></i> <span>ADMIN</span></div>
+                <div class="nav-brand">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span class="app-title">ADMIN</span>
+                </div>
                 <div class="nav-item active" id="navMediators"><i class="fa-solid fa-users"></i><span>EQUIPE</span></div>
                 <div class="nav-item" id="navDashboard"><i class="fa-solid fa-calculator"></i><span>FINANCEIRO</span></div>
                 <div class="nav-item" id="navReports"><i class="fa-solid fa-file-contract"></i><span>RELATÓRIOS</span></div>
@@ -41,9 +44,9 @@
 
             <main class="content-area">
                 <header>
-                    <h1 id="pageTitle">EQUIPE</h1>
+                    <h1 class="app-title" id="pageTitle">EQUIPE</h1>
                     <div class="header-actions">
-                        <span>Pedro Mestre dos Anjos</span>
+                        <span style="font-size: 0.8rem; color: #888;">Pedro Mestre dos Anjos</span>
                         <div class="avatar-small"><img src="https://i.pravatar.cc/150?img=11"></div>
                     </div>
                 </header>
@@ -51,17 +54,29 @@
                 <div id="viewMediators">
                     <div class="desktop-controls">
                         <div class="search-container">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="searchInput" placeholder="Buscar por nome ou cargo...">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" placeholder="Buscar por nome ou cargo..." id="searchInput">
                         </div>
-                        <button class="save-btn" id="btnSyncDrive" style="background:#4285f4;"><i class="fa-solid fa-rotate"></i> SINCRONIZAR</button>
-                        <button class="save-btn" id="btnExportTeamCSV" style="background:#2ecc71;"><i class="fa-solid fa-file-excel"></i> PLANILHA</button>
-                        <button class="save-btn" id="btnAddNewDesktop"><i class="fa-solid fa-plus"></i> NOVO</button>
+                        <button class="save-btn" id="btnSyncDrive" style="background-color: #4285f4; color: white;">
+                            <i class="fa-solid fa-rotate"></i> SINCRONIZAR FORMS
+                        </button>
+                        <button class="save-btn" id="btnExportTeamCSV" style="background-color: #2ecc71; color: white;">
+                            <i class="fa-solid fa-file-excel"></i> PLANILHA
+                        </button>
+                        <button class="save-btn" id="btnAddNewDesktop">
+                            <i class="fa-solid fa-plus"></i> NOVO MEMBRO
+                        </button>
                     </div>
-
+                    
                     <div class="stats-grid">
-                        <div class="stat-card"><span>TOTAL EQUIPE</span><h2 id="totalCount">0</h2></div>
-                        <div class="stat-card"><span>STATUS ALERTA</span><h2 id="alertCount" style="color:#ff4d4d;">0</h2></div>
+                        <div class="stat-card">
+                            <span class="stat-label">TOTAL EQUIPE</span>
+                            <span class="stat-number" id="totalCount">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label" style="color: #f1c40f;">STATUS ALERTA</span>
+                            <span class="stat-number" id="alertCount" style="color: #ff4d4d;">0</span>
+                        </div>
                     </div>
 
                     <div id="mediatorList" class="mediator-list"></div>
@@ -69,8 +84,8 @@
 
                 <div id="viewDashboard" style="display: none;">
                     <div class="balance-container">
-                        <span>SALDO EM CAIXA</span>
-                        <h1 id="displayBalance">R$ 0,00</h1>
+                        <span class="balance-label">SALDO EM CAIXA</span>
+                        <h1 class="balance-value" id="displayBalance">R$ 0,00</h1>
                     </div>
                     <div class="finance-controls">
                         <div class="fin-row">
@@ -79,7 +94,7 @@
                                 <option value="Mensalidade">Mensalidade</option>
                                 <option value="Gasto">Gasto</option>
                             </select>
-                            <input type="number" id="finValue" class="fin-input-small" placeholder="Valor">
+                            <input type="number" id="finValue" class="fin-input-small" placeholder="0,00">
                             <button id="btnSaveFinance" class="save-btn">LANÇAR</button>
                         </div>
                     </div>
@@ -87,16 +102,20 @@
                 </div>
 
                 <div id="viewReports" style="display: none;">
-                    <div class="section-header"><h2>RELATÓRIOS GERAIS</h2></div>
-                    <div id="reportsList"></div>
+                    <div class="section-header">
+                        <h2>RELATÓRIOS GERAIS</h2>
+                    </div>
+                    <div id="reportsList" class="reports-container"></div>
                 </div>
             </main>
+
+            <button class="fab" id="fabAddUser"><i class="fa-solid fa-plus"></i></button>
         </div>
 
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <h2>Editar Membro</h2>
+                <h2 style="color: #f1c40f;">Editar Membro</h2>
                 <input type="hidden" id="editUserId">
                 <div class="input-group"><label>Nome</label><input type="text" id="editName" class="custom-input"></div>
                 <div class="input-group">
@@ -109,14 +128,14 @@
                     </select>
                 </div>
                 <div class="input-group"><label>Dias</label><input type="number" id="editDays" class="custom-input"></div>
-                <button id="btnSaveEdit" class="save-btn">SALVAR</button>
+                <button id="btnSaveEdit" class="save-btn">SALVAR ALTERAÇÕES</button>
             </div>
         </div>
 
         <div id="addModal" class="modal">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <h2>Novo Cadastro</h2>
+                <h2 style="color: #f1c40f;">Novo Membro</h2>
                 <div class="input-group"><label>Nome</label><input type="text" id="addName" class="custom-input"></div>
                 <div class="input-group">
                     <label>Cargo</label>
@@ -130,6 +149,7 @@
                 <button id="btnSaveNew" class="save-btn">CADASTRAR</button>
             </div>
         </div>
+
     </div>
 
     <script src="js/script.js"></script>
