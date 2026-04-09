@@ -2,14 +2,15 @@ const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzbJJ7eTembJFbAaBx
 
 document.addEventListener('DOMContentLoaded', () => {
     let mediators = [];
+    let transactions = [];
     let termoPesquisa = "";
 
-    // --- TRAVA ANTI-DUPLICATA ---
+    // --- TRAVA ANTI-REPETIÇÃO ---
     function deduplicate(data) {
         const seen = new Set();
         return data.filter(item => {
-            const nome = (item.name || "").toLowerCase().trim();
-            return seen.has(nome) ? false : seen.add(nome);
+            const val = (item.name || "").toLowerCase().trim();
+            return seen.has(val) ? false : seen.add(val);
         });
     }
 
@@ -45,9 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.equipe) {
                 mediators = deduplicate(data.equipe);
-                renderMediators();
+                transactions = data.financeiro || [];
+                renderAll();
             }
-        } catch (e) { console.error("Erro na carga."); }
+        } catch (e) { console.error("Falha na carga."); }
     }
 
     // --- PESQUISA ---
@@ -140,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
         syncToCloud("UPDATE_EQUIPE");
     };
 
-    // Navegação
     const navs = {'navMediators': 'viewMediators', 'navDashboard': 'viewDashboard', 'navReports': 'viewReports'};
     Object.keys(navs).forEach(id => {
         document.getElementById(id).onclick = () => {
@@ -170,4 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btnAddNewDesktop').onclick = () => document.getElementById('addModal').style.display = 'flex';
+    document.getElementById('fabAddUser').onclick = () => document.getElementById('addModal').style.display = 'flex';
+
+    function renderAll() {
+        renderMediators();
+        const total = transactions.reduce((acc, t) => acc + (parseFloat(t.value) || 0), 0);
+        document.getElementById('displayBalance').innerText = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+    }
 });
