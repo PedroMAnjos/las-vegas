@@ -4,12 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AnjoW SS | High-End Admin</title>
+
+    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- ICONS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- FONTS -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
+    <!-- LOGIN -->
     <section id="loginScreen" class="auth-overlay">
         <div class="auth-card">
             <div class="auth-header">
@@ -17,136 +24,167 @@
                 <h1>ANJOW SS</h1>
                 <p>Security Terminal v4.0</p>
             </div>
+
             <div class="auth-body">
                 <div class="input-container">
                     <label>OPERADOR</label>
                     <input type="text" id="loginUser" placeholder="admin">
                 </div>
+
                 <div class="input-container">
                     <label>CHAVE DE ACESSO</label>
                     <input type="password" id="loginPass" placeholder="••••••••">
                 </div>
+
                 <button id="btnLogin" class="btn-gold-full">AUTENTICAR</button>
                 <div id="loginError" class="error-msg">Acesso Negado: Credenciais Inválidas.</div>
             </div>
         </div>
     </section>
 
+
+    <!-- APP -->
     <div id="appScreen" class="app-shell" style="display: none;">
-        
+
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <i class="fa-solid fa-crown"></i>
                 <span>ADMIN</span>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-group">
-                    <div class="nav-item active" id="navEquipe" data-view="viewMediators">
-                        <i class="fa-solid fa-users-gear"></i><span>EQUIPE</span>
+                    <div class="nav-item active" data-view="viewMediators">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>EQUIPE</span>
                     </div>
-                    <div class="nav-item" id="navFinanceiro" data-view="viewFinance">
-                        <i class="fa-solid fa-vault"></i><span>FINANCEIRO</span>
+
+                    <div class="nav-item" data-view="viewFinance">
+                        <i class="fa-solid fa-vault"></i>
+                        <span>FINANCEIRO</span>
                     </div>
-                    <div class="nav-item" id="navRelatorios" data-view="viewReports">
-                        <i class="fa-solid fa-file-invoice"></i><span>RELATÓRIOS</span>
+
+                    <div class="nav-item" data-view="viewReports">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>RELATÓRIOS</span>
                     </div>
                 </div>
+
                 <button id="btnLogout" class="btn-exit">
-                    <i class="fa-solid fa-right-from-bracket"></i><span>SAIR</span>
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>SAIR</span>
                 </button>
             </nav>
         </aside>
 
+
+        <!-- WORKSPACE -->
         <main class="workspace">
+
+            <!-- HEADER -->
             <header class="workspace-header">
                 <div class="title-area">
                     <h2 id="pageTitle">GESTÃO DE EQUIPE</h2>
                     <span id="liveClock">00:00:00</span>
                 </div>
+
                 <div class="admin-profile">
                     <div class="admin-info">
-                        <span class="admin-name">Pedro Mestre dos Anjos</span>
+                        <span class="admin-name">Pedro Mestre</span>
                         <span class="admin-tag">Master Developer</span>
                     </div>
-                    <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="admin-photo">
+                    <img src="https://i.pravatar.cc/150?img=11" class="admin-photo">
                 </div>
             </header>
 
+
+            <!-- VIEW EQUIPE -->
             <section id="viewMediators" class="view-content active">
+
                 <div class="top-controls">
                     <div class="search-bar">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="searchInput" placeholder="Filtrar membros por nome ou cargo...">
+                        <input type="text" placeholder="Filtrar membros...">
                     </div>
+
                     <div class="action-btns">
-                        <button id="btnSync" class="btn-action blue"><i class="fa-solid fa-rotate"></i> SYNC</button>
-                        <button id="btnCSV" class="btn-action green"><i class="fa-solid fa-file-csv"></i> CSV</button>
-                        <button id="btnNew" class="btn-action gold"><i class="fa-solid fa-plus"></i> NOVO</button>
+                        <button class="btn-action blue"><i class="fa-solid fa-rotate"></i> SYNC</button>
+                        <button class="btn-action green"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                        <button class="btn-action gold"><i class="fa-solid fa-plus"></i> NOVO</button>
                     </div>
                 </div>
+
 
                 <div class="stats-row">
                     <div class="stat-card">
                         <label>EFETIVO TOTAL</label>
-                        <h3 id="totalCount">0</h3>
+                        <h3>0</h3>
                     </div>
+
                     <div class="stat-card danger-glow">
-                        <label>ALERTAS DE ACESSO</label>
-                        <h3 id="alertCount">0</h3>
+                        <label>ALERTAS</label>
+                        <h3>0</h3>
                     </div>
                 </div>
+
 
                 <div class="table-container">
                     <div class="table-head">
-                        <span class="col-main">MEMBRO / CARGO</span>
-                        <span class="col-status">TEMPO RESTANTE</span>
-                        <span class="col-actions">GERENCIAMENTO</span>
+                        <span>MEMBRO</span>
+                        <span>TEMPO</span>
+                        <span>AÇÕES</span>
                     </div>
-                    <div id="mediatorList" class="table-body">
+
+                    <div class="table-body">
+                        <div class="card">
+                            <strong>João Silva</strong>
+                            <span>5 dias</span>
+                            <button>Editar</button>
                         </div>
+                    </div>
                 </div>
             </section>
 
-            <section id="viewFinance" class="view-content" style="display: none;">
+
+            <!-- VIEW FINANCEIRO -->
+            <section id="viewFinance" class="view-content" style="display:none;">
                 <div class="balance-hero">
-                    <label>SALDO ATUAL EM CAIXA</label>
-                    <h1 id="displayBalance">R$ 0,00</h1>
+                    <label>SALDO</label>
+                    <h1>R$ 0,00</h1>
                 </div>
             </section>
+
         </main>
     </div>
 
-    <div id="editModal" class="modal-backdrop">
+
+    <!-- MODAL -->
+    <div id="editModal" class="modal-backdrop" style="display:none;">
         <div class="modal-window">
+
             <div class="modal-header">
-                <h3><i class="fa-solid fa-user-pen"></i> EDITAR MEMBRO</h3>
+                <h3>EDITAR MEMBRO</h3>
                 <span class="close-modal">&times;</span>
             </div>
+
             <div class="modal-body">
-                <input type="hidden" id="editUserId">
-                <div class="form-group">
-                    <label>NOME COMPLETO</label>
-                    <input type="text" id="editName" class="gold-input">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>CARGO</label>
-                        <select id="editRole" class="gold-input">
-                            <option value="ADM">ADMINISTRADOR</option>
-                            <option value="SUP">SUPORTE</option>
-                            <option value="AUX">AUXILIAR</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>DIAS</label>
-                        <input type="number" id="editDays" class="gold-input">
-                    </div>
-                </div>
-                <button id="btnSaveEdit" class="btn-save">ATUALIZAR CREDENCIAIS</button>
+                <input type="text" placeholder="Nome">
+                <input type="number" placeholder="Dias">
+                <button class="btn-save">SALVAR</button>
             </div>
+
         </div>
     </div>
 
-    <script src="js/script.js"></script>
+
+    <!-- SCRIPT -->
+    <script>
+    document.getElementById("btnLogin").onclick = () => {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appScreen").style.display = "flex";
+    };
+    </script>
+
 </body>
 </html>
