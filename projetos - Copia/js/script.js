@@ -1,6 +1,6 @@
 // =========================================================================
 // SUA URL DE CONEXÃO DEFINITIVA
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzd7gbs6vAiaW4ZZ4169ncCkmC2ZY2ZYNbNIZ9_IX1RAwtK2t0ocFAINhmaQ_tw_XEiaQ/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxyMFcjAtjdQ8oIUQWXbx4cFkOmjXpl2rVjPvZ2djd1sDNO47dhh-ivJKrNAlwbULv8Lg/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 2. CARREGAR DADOS ---
+    // --- 2. CARREGAR DADOS (AGORA SILENCIOSO) ---
     async function loadData() {
         try {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             transactions = data.financeiro || [];
             renderAll();
         } catch (e) {
-            console.error("Erro ao carregar dados", e);
+            console.log("Aguardando conexão..."); // Esconde o erro pra não poluir caso a internet pisque
         }
     }
 
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(alertEl) alertEl.innerText = mediators.filter(m => m.daysLeft <= 0).length;
     }
 
-    // --- 8. EVENTOS DE CLIQUE (DELEGAÇÃO) ---
+    // --- 8. EVENTOS DE CLIQUE ---
     const listContainer = document.getElementById('mediatorList');
     if (listContainer) {
         listContainer.addEventListener('click', async (e) => {
@@ -256,4 +256,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // =========================================================
+    // 9. MOTOR AUTOMÁTICO (ATUALIZAÇÃO EM TEMPO REAL)
+    // =========================================================
+    // O site vai ao Google buscar novidades a cada 15 segundos
+    setInterval(() => {
+        if (localStorage.getItem('sysIsLoggedIn') === 'true') {
+            loadData();
+        }
+    }, 15000); 
+    // Nota: Deixamos em 15000 (15 segundos) para o Google não bloquear a sua planilha por "excesso de acessos".
 });
