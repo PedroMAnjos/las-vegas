@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnjoW SS - Painel Administrativo</title>
+    <title>AnjoW SS - Gestão de Elite</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
         <div class="login-box">
             <div class="login-logo"><i class="fa-solid fa-shield-halved"></i></div>
             <h1 class="app-title">Painel Admin</h1>
-            <p style="color:#888; font-size:0.8rem; margin-bottom:30px;">Acesso Restrito - Pedro Mestre</p>
+            <p style="color:#888; font-size:0.8rem; margin-bottom:30px;">Acesso Restrito - Dev. Pedro Mestre</p>
             <div class="input-group">
                 <label>Usuário</label>
                 <input type="text" id="loginUser" class="custom-input" placeholder="admin">
@@ -30,7 +30,6 @@
 
     <div id="appScreen" style="display: none;">
         <div class="main-layout">
-            
             <nav class="side-nav">
                 <div class="nav-brand"><i class="fa-solid fa-crown"></i><span>ADMIN</span></div>
                 <div class="nav-item active" id="navMediators" data-view="viewMediators"><i class="fa-solid fa-users"></i><span>EQUIPE</span></div>
@@ -43,7 +42,7 @@
                 <header class="main-header">
                     <h1 class="app-title" id="pageTitle">EQUIPE</h1>
                     <div class="header-actions">
-                        <span class="user-name">Pedro Mestre dos Anjos</span>
+                        <span class="user-name">Administrador Sênior</span>
                         <div class="avatar-small"><img src="https://i.pravatar.cc/150?img=11"></div>
                     </div>
                 </header>
@@ -85,7 +84,7 @@
                 <div id="viewDashboard" class="view-section" style="display:none;">
                     <div class="balance-container">
                         <span class="balance-label">SALDO EM CAIXA</span>
-                        <h1 id="displayBalance">R$ 0,00</h1>
+                        <h1 id="displayBalance" class="balance-value">R$ 0,00</h1>
                     </div>
                 </div>
             </main>
