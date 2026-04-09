@@ -16,175 +16,205 @@
 </head>
 <body>
 
-    <!-- LOGIN -->
-    <section id="loginScreen" class="auth-overlay">
-        <div class="auth-card">
-            <div class="auth-header">
-                <i class="fa-solid fa-shield-halved gold-icon"></i>
-                <h1>ANJOW SS</h1>
-                <p>Security Terminal v4.0</p>
-            </div>
+<!-- LOGIN -->
+<section id="loginScreen" class="login-container">
+    <div class="login-glass-box">
+        <div class="logo-wrapper">
+            <i class="fa-solid fa-shield-halved main-gold-icon"></i>
+        </div>
+        <h1 class="brand-name">ANJOW SS</h1>
+        <p class="brand-tagline">Security Terminal v4.0</p>
 
-            <div class="auth-body">
-                <div class="input-container">
-                    <label>OPERADOR</label>
+        <div class="auth-form">
+            <div class="input-field-group">
+                <label>OPERADOR</label>
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-user"></i>
                     <input type="text" id="loginUser" placeholder="admin">
                 </div>
+            </div>
 
-                <div class="input-container">
-                    <label>CHAVE DE ACESSO</label>
+            <div class="input-field-group">
+                <label>CHAVE DE ACESSO</label>
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-lock"></i>
                     <input type="password" id="loginPass" placeholder="••••••••">
                 </div>
-
-                <button id="btnLogin" class="btn-gold-full">AUTENTICAR</button>
-                <div id="loginError" class="error-msg">Acesso Negado: Credenciais Inválidas.</div>
             </div>
+
+            <button id="btnLogin" class="btn-auth-submit">
+                <i class="fa-solid fa-right-to-bracket"></i> AUTENTICAR
+            </button>
+
+            <div id="loginError" class="auth-error-msg">Acesso Negado</div>
         </div>
-    </section>
+    </div>
+</section>
 
 
-    <!-- APP -->
-    <div id="appScreen" class="app-shell" style="display: none;">
+<!-- APP -->
+<div id="appScreen" class="app-layout" style="display:none;">
 
-        <!-- SIDEBAR -->
-        <aside class="sidebar">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div>
             <div class="sidebar-brand">
                 <i class="fa-solid fa-crown"></i>
                 <span>ADMIN</span>
             </div>
 
             <nav class="sidebar-nav">
-                <div class="nav-group">
-                    <div class="nav-item active" data-view="viewMediators">
-                        <i class="fa-solid fa-users-gear"></i>
+                <ul>
+                    <li class="nav-item active" data-view="viewMediators">
+                        <i class="fa-solid fa-users"></i>
                         <span>EQUIPE</span>
-                    </div>
+                    </li>
 
-                    <div class="nav-item" data-view="viewFinance">
-                        <i class="fa-solid fa-vault"></i>
+                    <li class="nav-item" data-view="viewFinance">
+                        <i class="fa-solid fa-wallet"></i>
                         <span>FINANCEIRO</span>
-                    </div>
+                    </li>
 
-                    <div class="nav-item" data-view="viewReports">
-                        <i class="fa-solid fa-file-invoice"></i>
+                    <li class="nav-item" data-view="viewReports">
+                        <i class="fa-solid fa-chart-line"></i>
                         <span>RELATÓRIOS</span>
-                    </div>
-                </div>
-
-                <button id="btnLogout" class="btn-exit">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>SAIR</span>
-                </button>
+                    </li>
+                </ul>
             </nav>
-        </aside>
+        </div>
+
+        <button id="btnLogout" class="btn-logout-sidebar">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>SAIR</span>
+        </button>
+    </aside>
 
 
-        <!-- WORKSPACE -->
-        <main class="workspace">
+    <!-- MAIN -->
+    <main class="main-content">
 
-            <!-- HEADER -->
-            <header class="workspace-header">
-                <div class="title-area">
-                    <h2 id="pageTitle">GESTÃO DE EQUIPE</h2>
-                    <span id="liveClock">00:00:00</span>
-                </div>
-
-                <div class="admin-profile">
-                    <div class="admin-info">
-                        <span class="admin-name">Pedro Mestre</span>
-                        <span class="admin-tag">Master Developer</span>
-                    </div>
-                    <img src="https://i.pravatar.cc/150?img=11" class="admin-photo">
-                </div>
-            </header>
+        <!-- HEADER -->
+        <div class="content-header">
+            <h2>Dashboard</h2>
+            <div class="live-clock" id="clock"></div>
+        </div>
 
 
-            <!-- VIEW EQUIPE -->
-            <section id="viewMediators" class="view-content active">
-
-                <div class="top-controls">
-                    <div class="search-bar">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" placeholder="Filtrar membros...">
-                    </div>
-
-                    <div class="action-btns">
-                        <button class="btn-action blue"><i class="fa-solid fa-rotate"></i> SYNC</button>
-                        <button class="btn-action green"><i class="fa-solid fa-file-csv"></i> CSV</button>
-                        <button class="btn-action gold"><i class="fa-solid fa-plus"></i> NOVO</button>
-                    </div>
-                </div>
-
-
-                <div class="stats-row">
-                    <div class="stat-card">
-                        <label>EFETIVO TOTAL</label>
-                        <h3>0</h3>
-                    </div>
-
-                    <div class="stat-card danger-glow">
-                        <label>ALERTAS</label>
-                        <h3>0</h3>
-                    </div>
-                </div>
-
-
-                <div class="table-container">
-                    <div class="table-head">
-                        <span>MEMBRO</span>
-                        <span>TEMPO</span>
-                        <span>AÇÕES</span>
-                    </div>
-
-                    <div class="table-body">
-                        <div class="card">
-                            <strong>João Silva</strong>
-                            <span>5 dias</span>
-                            <button>Editar</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- VIEW FINANCEIRO -->
-            <section id="viewFinance" class="view-content" style="display:none;">
-                <div class="balance-hero">
-                    <label>SALDO</label>
-                    <h1>R$ 0,00</h1>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-
-    <!-- MODAL -->
-    <div id="editModal" class="modal-backdrop" style="display:none;">
-        <div class="modal-window">
-
-            <div class="modal-header">
-                <h3>EDITAR MEMBRO</h3>
-                <span class="close-modal">&times;</span>
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Buscar membros...">
             </div>
 
-            <div class="modal-body">
-                <input type="text" placeholder="Nome">
-                <input type="number" placeholder="Dias">
-                <button class="btn-save">SALVAR</button>
+            <div class="toolbar-actions">
+                <button class="btn-primary blue-glow"><i class="fa-solid fa-rotate"></i> Sync</button>
+                <button class="btn-primary green-glow"><i class="fa-solid fa-file"></i> CSV</button>
+                <button class="btn-primary gold-glow"><i class="fa-solid fa-plus"></i> Novo</button>
+            </div>
+        </div>
+
+
+        <!-- STATS -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon-box blue"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-info">
+                    <label>Total</label>
+                    <h3>12</h3>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-box red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-info">
+                    <label>Alertas</label>
+                    <h3>2</h3>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-box green"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-info">
+                    <label>Ativos</label>
+                    <h3>10</h3>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- TABELA -->
+        <div class="data-container">
+
+            <div class="data-header-grid">
+                <span>MEMBRO</span>
+                <span>DIAS</span>
+                <span>AÇÕES</span>
+            </div>
+
+            <div class="table-row">
+                <div>
+                    <div class="row-name">Pedro Mestre</div>
+                    <span class="role-badge">ADM</span>
+                </div>
+                <div class="days-count text-green">10</div>
+                <div>
+                    <button class="action-btn">Editar</button>
+                </div>
             </div>
 
         </div>
+
+    </main>
+</div>
+
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Editar</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+
+        <div class="form-group-full">
+            <label>Nome</label>
+            <input class="modal-input" type="text">
+        </div>
+
+        <div class="form-row-split">
+            <input class="modal-input" type="text" placeholder="Cargo">
+            <input class="modal-input" type="number" placeholder="Dias">
+        </div>
+
+        <button class="btn-modal-save">Salvar</button>
     </div>
+</div>
 
 
-    <!-- SCRIPT -->
-    <script>
-    document.getElementById("btnLogin").onclick = () => {
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("appScreen").style.display = "flex";
+<script>
+// LOGIN
+const loginBtn = document.getElementById("btnLogin");
+loginBtn.onclick = () => {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appScreen").style.display = "flex";
+};
+
+// CLOCK
+setInterval(() => {
+    const now = new Date();
+    document.getElementById("clock").innerText = now.toLocaleTimeString();
+}, 1000);
+
+// NAV
+const navItems = document.querySelectorAll(".nav-item");
+navItems.forEach(item => {
+    item.onclick = () => {
+        navItems.forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
     };
-    </script>
+});
+</script>
 
 </body>
 </html>
