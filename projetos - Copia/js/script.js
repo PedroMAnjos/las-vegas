@@ -25,7 +25,8 @@ document.getElementById("btnLogout").onclick = () => location.reload();
 
 // CLOCK
 setInterval(()=>{
-    document.getElementById("clock").innerText = new Date().toLocaleTimeString();
+    let el = document.getElementById("clock");
+    if(el) el.innerText = new Date().toLocaleTimeString();
 },1000);
 
 // RENDER
