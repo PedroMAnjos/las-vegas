@@ -2,15 +2,14 @@ const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzbJJ7eTembJFbAaBx
 
 document.addEventListener('DOMContentLoaded', () => {
     let mediators = [];
-    let transactions = [];
     let termoPesquisa = "";
 
-    // --- TRAVA ANTI-REPETIÇÃO ---
+    // --- FUNÇÃO DE TRAVA: REMOVE REPETIDOS PELO NOME ---
     function deduplicate(data) {
         const seen = new Set();
         return data.filter(item => {
-            const val = (item.name || "").toLowerCase().trim();
-            return seen.has(val) ? false : seen.add(val);
+            const nomeUnico = (item.name || "").toLowerCase().trim();
+            return seen.has(nomeUnico) ? false : seen.add(nomeUnico);
         });
     }
 
@@ -32,13 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    document.getElementById('btnLogout').onclick = () => {
-        if(confirm("Deseja sair?")) {
-            localStorage.removeItem('sysIsLoggedIn');
-            location.reload();
-        }
-    };
-
     // --- CARREGAR DADOS ---
     async function loadData() {
         try {
@@ -46,10 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.equipe) {
                 mediators = deduplicate(data.equipe);
-                transactions = data.financeiro || [];
-                renderAll();
+                renderMediators();
             }
-        } catch (e) { console.error("Falha na carga."); }
+        } catch (e) { console.error("Erro na carga."); }
     }
 
     // --- PESQUISA ---
@@ -71,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtrados.forEach(user => {
             const role = (user.role || "").toUpperCase();
+            // REGRA SENIOR: SUP E AUX SÃO ILIMITADOS
             const isUnlimited = role.includes("SUP") || role.includes("AUX");
             const isExp = !isUnlimited && parseInt(user.daysLeft) <= 0;
 
@@ -81,14 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
             row.className = 'table-row';
             row.innerHTML = `
                 <div class="row-info">
-                    <div>
-                        <h4 class="row-name">${user.name}</h4>
-                        <span class="role-badge">${user.role}</span>
-                        <span class="id-display">#${user.idForm || 'Manual'}</span>
-                    </div>
+                    <h4 class="row-name">${user.name}</h4>
+                    <span class="text-yellow" style="font-size:0.7rem;">${user.role} | #${user.idForm || 'Manual'}</span>
                 </div>
-                <div class="row-status-col" style="text-align: center;">
-                    <span class="${timeColor} font-weight-bold" style="font-family: 'Cinzel';">${timeTxt}</span>
+                <div style="text-align: center;">
+                    <span class="${timeColor}" style="font-weight:bold; font-family:'Cinzel';">${timeTxt}</span>
                 </div>
                 <div class="row-actions">
                     <button class="action-btn text-green btn-renovar" data-id="${user.id}">+7</button>
@@ -105,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).length;
     }
 
-    // --- EVENTOS ---
+    // --- EVENTOS DE BOTÃO ---
     document.getElementById('mediatorList').onclick = (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
@@ -131,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- SALVAR EDIÇÃO ---
     document.getElementById('btnSaveEdit').onclick = () => {
         const id = document.getElementById('editUserId').value;
         const u = mediators.find(m => m.id == id);
@@ -142,6 +132,14 @@ document.addEventListener('DOMContentLoaded', () => {
         syncToCloud("UPDATE_EQUIPE");
     };
 
+    // --- SINCRONIA ---
+    async function syncToCloud(type, extra = null) {
+        let body = { type, data: deduplicate(mediators) };
+        if (type === "DELETE_MEMBER") body = { type, deletedName: extra.name, data: body.data };
+        await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
+    }
+
+    // --- NAVEGAÇÃO ---
     const navs = {'navMediators': 'viewMediators', 'navDashboard': 'viewDashboard', 'navReports': 'viewReports'};
     Object.keys(navs).forEach(id => {
         document.getElementById(id).onclick = () => {
@@ -149,33 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(navs[id]).style.display = 'block';
             document.getElementById(id).classList.add('active');
-            document.getElementById('pageTitle').innerText = document.getElementById(id).innerText.trim();
         };
     });
 
-    async function syncToCloud(type, extra = null) {
-        let body = { type, data: deduplicate(mediators) };
-        if (type === "DELETE_MEMBER") body = { type, deletedName: extra.name, data: body.data };
-        await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
-    }
-
-    document.getElementById('btnSyncDrive').onclick = async () => {
-        document.getElementById('btnSyncDrive').innerText = "Sincronizando...";
-        await loadData();
-        document.getElementById('btnSyncDrive').innerHTML = '<i class="fa-solid fa-rotate"></i> SINCRONIZAR FORMS';
-    };
-
+    // Fechar Modais
     document.querySelectorAll('.close-modal').forEach(b => b.onclick = () => {
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('addModal').style.display = 'none';
     });
-
-    document.getElementById('btnAddNewDesktop').onclick = () => document.getElementById('addModal').style.display = 'flex';
-    document.getElementById('fabAddUser').onclick = () => document.getElementById('addModal').style.display = 'flex';
-
-    function renderAll() {
-        renderMediators();
-        const total = transactions.reduce((acc, t) => acc + (parseFloat(t.value) || 0), 0);
-        document.getElementById('displayBalance').innerText = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    }
 });
