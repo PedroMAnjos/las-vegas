@@ -1,6 +1,6 @@
 // =========================================================================
 // SUA URL DE CONEXÃO DEFINITIVA
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxyMFcjAtjdQ8oIUQWXbx4cFkOmjXpl2rVjPvZ2djd1sDNO47dhh-ivJKrNAlwbULv8Lg/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzd7gbs6vAiaW4ZZ4169ncCkmC2ZY2ZYNbNIZ9_IX1RAwtK2t0ocFAINhmaQ_tw_XEiaQ/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 2. CARREGAR DADOS (AGORA SILENCIOSO) ---
+    // --- 2. CARREGAR DADOS ---
     async function loadData() {
         try {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
@@ -52,20 +52,27 @@ document.addEventListener('DOMContentLoaded', () => {
             transactions = data.financeiro || [];
             renderAll();
         } catch (e) {
-            console.log("Aguardando conexão..."); // Esconde o erro pra não poluir caso a internet pisque
+            console.log("Aguardando sincronização com o banco...");
         }
     }
 
-    // --- 3. SALVAR MUDANÇAS ---
+    // --- 3. SALVAR MUDANÇAS (COM SUPORTE A LISTA NEGRA) ---
     async function syncToCloud(type, extraData = null) {
-        const body = type === "TRANSACTION" 
-            ? { type, ...extraData } 
-            : { type: "UPDATE_EQUIPE", data: mediators };
+        let body = {};
+        
+        if (type === "TRANSACTION") {
+            body = { type, ...extraData };
+        } else if (type === "UPDATE_EQUIPE") {
+            body = { type: "UPDATE_EQUIPE", data: mediators };
+        } else if (type === "DELETE_MEMBER") {
+            // Avisa o servidor quem foi excluido para ir para a aba 'Excluidos'
+            body = { type: "DELETE_MEMBER", deletedName: extraData.name, data: mediators };
+        }
 
         try {
             await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
         } catch(e) {
-            alert("Erro ao salvar no Google. Verifique a internet.");
+            console.log("Aguardando internet para salvar...");
         }
     }
 
@@ -224,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(alertEl) alertEl.innerText = mediators.filter(m => m.daysLeft <= 0).length;
     }
 
-    // --- 8. EVENTOS DE CLIQUE ---
+    // --- 8. EVENTOS DE CLIQUE (LIXEIRA COM BLOQUEIO) ---
     const listContainer = document.getElementById('mediatorList');
     if (listContainer) {
         listContainer.addEventListener('click', async (e) => {
@@ -248,9 +255,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const btnExcluir = e.target.closest('.btn-excluir');
             if (btnExcluir) {
-                if(confirm("Deseja realmente excluir este membro?")) {
+                const u = mediators.find(m => m.id == btnExcluir.dataset.id);
+                if(u && confirm(`Deseja realmente EXCLUIR e bloquear ${u.name}?`)) {
+                    // Remove da tela na hora
                     mediators = mediators.filter(m => m.id != btnExcluir.dataset.id);
-                    renderMediators(); await syncToCloud("UPDATE_EQUIPE");
+                    renderMediators(); 
+                    
+                    // Manda a ordem de Exclusão e Bloqueio pro Google
+                    await syncToCloud("DELETE_MEMBER", { name: u.name });
                 }
                 return;
             }
@@ -260,11 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================
     // 9. MOTOR AUTOMÁTICO (ATUALIZAÇÃO EM TEMPO REAL)
     // =========================================================
-    // O site vai ao Google buscar novidades a cada 15 segundos
     setInterval(() => {
         if (localStorage.getItem('sysIsLoggedIn') === 'true') {
             loadData();
         }
-    }, 15000); 
-    // Nota: Deixamos em 15000 (15 segundos) para o Google não bloquear a sua planilha por "excesso de acessos".
+    }, 15000); // Checa novidades no Google a cada 15 segundos
 });
