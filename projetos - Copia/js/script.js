@@ -1,6 +1,6 @@
 // =========================================================================
-// SUA NOVA URL DE CONEXÃO DEFINITIVA
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxyMFcjAtjdQ8oIUQWXbx4cFkOmjXpl2rVjPvZ2djd1sDNO47dhh-ivJKrNAlwbULv8Lg/exec";
+// SUA URL DE CONEXÃO DEFINITIVA
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzd7gbs6vAiaW4ZZ4169ncCkmC2ZY2ZYNbNIZ9_IX1RAwtK2t0ocFAINhmaQ_tw_XEiaQ/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 2. CARREGAR DADOS DA NUVEM ---
+    // --- 2. CARREGAR DADOS ---
     async function loadData() {
         try {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
@@ -56,17 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 3. SALVAR MUDANÇAS NA NUVEM ---
+    // --- 3. SALVAR MUDANÇAS ---
     async function syncToCloud(type, extraData = null) {
         const body = type === "TRANSACTION" 
             ? { type, ...extraData } 
             : { type: "UPDATE_EQUIPE", data: mediators };
 
         try {
-            await fetch(URL_PLANILHA, {
-                method: 'POST',
-                body: JSON.stringify(body)
-            });
+            await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
         } catch(e) {
             alert("Erro ao salvar no Google. Verifique a internet.");
         }
@@ -77,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFinanceUI();
     }
 
-    // --- 4. ATUALIZAR / SINCRONIZAR TELA ---
+    // --- 4. BOTÕES DE ATUALIZAR E ADICIONAR ---
     const btnSync = document.getElementById('btnSyncDrive');
     if(btnSync) {
         btnSync.onclick = async () => {
@@ -86,6 +83,29 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSync.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> ATUALIZAR DADOS';
         };
     }
+
+    function adicionarMembroManual() {
+        const nome = prompt("Digite o nome do novo membro:");
+        if (!nome || nome.trim() === "") return;
+        
+        const cargo = prompt("Qual o cargo? (Ex: ADM, SUP, AUX):", "PENDENTE");
+        
+        mediators.unshift({
+            id: new Date().getTime(),
+            name: nome.toUpperCase(),
+            role: cargo ? cargo.toUpperCase() : "PENDENTE",
+            daysLeft: 0,
+            idForm: "Manual"
+        });
+        
+        renderMediators();
+        syncToCloud("UPDATE_EQUIPE");
+    }
+
+    const btnNovoAmarelo = document.getElementById('btnNovoMembro');
+    const btnNovoFlutuante = document.getElementById('btnNovoFlutuante');
+    if(btnNovoAmarelo) btnNovoAmarelo.onclick = adicionarMembroManual;
+    if(btnNovoFlutuante) btnNovoFlutuante.onclick = adicionarMembroManual;
 
     // --- 5. FINANCEIRO ---
     const btnAddInc = document.getElementById('btnAddIncome');
@@ -141,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 6. NAVEGAÇÃO ENTRE TELAS ---
+    // --- 6. NAVEGAÇÃO ---
     const views = ['viewMediators', 'viewDashboard', 'viewReports'];
     const navs = ['navMediators', 'navDashboard', 'navReports'];
 
@@ -166,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 7. RENDERIZAÇÃO DA EQUIPE ---
+    // --- 7. RENDERIZAR EQUIPE ---
     function renderMediators() {
         const list = document.getElementById('mediatorList');
         if(!list) return;
@@ -204,45 +224,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if(alertEl) alertEl.innerText = mediators.filter(m => m.daysLeft <= 0).length;
     }
 
-    // --- 8. EVENTOS DE CLIQUE BLINDADOS (DELEGAÇÃO) ---
+    // --- 8. EVENTOS DE CLIQUE (DELEGAÇÃO) ---
     const listContainer = document.getElementById('mediatorList');
     if (listContainer) {
         listContainer.addEventListener('click', async (e) => {
             
             const btnRenovar = e.target.closest('.btn-renovar');
             if (btnRenovar) {
-                const id = btnRenovar.dataset.id;
-                const u = mediators.find(m => m.id == id);
-                if(u) {
-                    u.daysLeft = parseInt(u.daysLeft || 0) + 7;
-                    renderMediators(); 
-                    await syncToCloud("UPDATE_EQUIPE"); 
-                }
+                const u = mediators.find(m => m.id == btnRenovar.dataset.id);
+                if(u) { u.daysLeft = parseInt(u.daysLeft || 0) + 7; renderMediators(); await syncToCloud("UPDATE_EQUIPE"); }
                 return;
             }
 
             const btnCargo = e.target.closest('.btn-cargo');
             if (btnCargo) {
-                const id = btnCargo.dataset.id;
-                const u = mediators.find(m => m.id == id);
+                const u = mediators.find(m => m.id == btnCargo.dataset.id);
                 if(u) {
-                    const novo = prompt("Novo Cargo (Ex: ADM, SUP, AUX):", u.role);
-                    if(novo) { 
-                        u.role = novo.toUpperCase(); 
-                        renderMediators();
-                        await syncToCloud("UPDATE_EQUIPE"); 
-                    }
+                    const novo = prompt("Novo Cargo:", u.role);
+                    if(novo) { u.role = novo.toUpperCase(); renderMediators(); await syncToCloud("UPDATE_EQUIPE"); }
                 }
                 return;
             }
 
             const btnExcluir = e.target.closest('.btn-excluir');
             if (btnExcluir) {
-                const id = btnExcluir.dataset.id;
                 if(confirm("Deseja realmente excluir este membro?")) {
-                    mediators = mediators.filter(m => m.id != id);
-                    renderMediators();
-                    await syncToCloud("UPDATE_EQUIPE");
+                    mediators = mediators.filter(m => m.id != btnExcluir.dataset.id);
+                    renderMediators(); await syncToCloud("UPDATE_EQUIPE");
                 }
                 return;
             }
