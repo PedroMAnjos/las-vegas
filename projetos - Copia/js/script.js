@@ -1,6 +1,6 @@
 // =========================================================================
-// URL DA SUA IMPLANTAÇÃO GOOGLE
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbx82Xc6fkbqyKF5WEE57InGPeTIVt8-xitOHNcp3QZ6VMVtkmmW5UT6iyuXTfSji6dT/exec";
+// URL DO BANCO DE DADOS OFICIAL (LAS VEGAS)
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbyurX1ehcrJs1jcc6rNEEAtcBWGY_MnT2J_9w6jpZe2x58hXqgtU0atW4S1LPleG4cD/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,7 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let transactions = [];
 
     // --- 1. SISTEMA DE LOGIN ---
-    if (localStorage.getItem('sysIsLoggedIn') === 'true') showApp();
+    if (localStorage.getItem('sysIsLoggedIn') === 'true') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        loadData();
+    }
 
     const btnLogin = document.getElementById('btnLogin');
     if(btnLogin) {
@@ -20,99 +24,83 @@ document.addEventListener('DOMContentLoaded', () => {
             const p = document.getElementById('loginPass').value;
             if (u === 'pedro' && p === 'mestre') {
                 localStorage.setItem('sysIsLoggedIn', 'true');
-                showApp();
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appScreen').style.display = 'block';
+                loadData();
             } else {
                 document.getElementById('loginError').style.display = 'block';
             }
         };
     }
 
-    function showApp() {
-        if(loginScreen) loginScreen.style.display = 'none';
-        if(appScreen) appScreen.style.display = 'block';
-        loadData();
-    }
-
     document.getElementById('btnLogout').onclick = () => {
-        if(confirm("Deseja sair?")) {
+        if(confirm("Deseja sair do sistema?")) {
             localStorage.removeItem('sysIsLoggedIn');
             location.reload();
         }
     };
 
-    // --- 2. GERENCIAMENTO DE DADOS ---
-    function loadData() {
-        const storedMed = localStorage.getItem('sysMediatorsV2');
-        mediators = storedMed ? JSON.parse(storedMed) : [];
-        
-        const storedFin = localStorage.getItem('sysFinance');
-        transactions = storedFin ? JSON.parse(storedFin) : [];
-        
-        renderMediators();
-        updateFinanceUI();
-    }
-
-    function saveData() {
-        localStorage.setItem('sysMediatorsV2', JSON.stringify(mediators));
-        localStorage.setItem('sysFinance', JSON.stringify(transactions));
-        renderMediators();
-        updateFinanceUI();
-    }
-
-    // --- 3. SINCRONIZAÇÃO FORMS ---
-    async function sincronizar() {
-        const btn = document.getElementById('btnSyncDrive');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> CARREGANDO...';
+    // --- 2. CARREGAR DADOS DA NUVEM ---
+    async function loadData() {
         try {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
-            const dados = await res.json();
-            let novos = 0;
-            dados.forEach(item => {
-                const existe = mediators.find(m => m.name.toLowerCase() === item.name.toLowerCase());
-                if (!existe) {
-                    mediators.push({
-                        id: Date.now() + Math.random(),
-                        name: item.name,
-                        role: "PENDENTE",
-                        daysLeft: 0,
-                        idForm: item.idForm
-                    });
-                    novos++;
-                }
-            });
-            saveData();
-            alert(novos + " novos importados!");
+            const data = await res.json();
+            mediators = data.equipe || [];
+            transactions = data.financeiro || [];
+            renderAll();
         } catch (e) {
-            alert("Erro de conexão com o Google.");
-        } finally {
-            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> SINCRONIZAR FORMS';
+            console.error("Erro ao carregar dados do Google", e);
         }
     }
-    document.getElementById('btnSyncDrive').onclick = sincronizar;
 
-    // --- 4. FINANCEIRO (Ações) ---
-    function addTransaction(type) {
-        const catId = type === 'income' ? 'incCategory' : 'expCategory';
-        const valId = type === 'income' ? 'incValue' : 'expValue';
-        
-        const cat = document.getElementById(catId).value;
-        const val = parseFloat(document.getElementById(valId).value);
+    // --- 3. SALVAR MUDANÇAS NA NUVEM ---
+    async function syncToCloud(type, extraData = null) {
+        const body = type === "TRANSACTION" 
+            ? { type, ...extraData } 
+            : { type: "UPDATE_EQUIPE", data: mediators };
 
-        if (isNaN(val) || val <= 0) return alert("Insira um valor válido.");
-
-        transactions.unshift({
-            id: Date.now(),
-            desc: cat,
-            value: type === 'income' ? val : -val,
-            date: new Date().toLocaleDateString('pt-BR')
-        });
-
-        document.getElementById(valId).value = ''; // Limpa campo
-        saveData();
+        try {
+            await fetch(URL_PLANILHA, {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            loadData(); // Recarrega os dados fresquinhos da nuvem
+        } catch(e) {
+            alert("Erro ao salvar. Verifique sua internet.");
+        }
     }
 
-    document.getElementById('btnAddIncome').onclick = () => addTransaction('income');
-    document.getElementById('btnAddExpense').onclick = () => addTransaction('expense');
+    function renderAll() {
+        renderMediators();
+        updateFinanceUI();
+    }
+
+    // --- 4. ATUALIZAR / SINCRONIZAR TELA ---
+    document.getElementById('btnSyncDrive').onclick = async () => {
+        const btn = document.getElementById('btnSyncDrive');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ATUALIZANDO...';
+        await loadData();
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> ATUALIZAR DADOS';
+    };
+
+    // --- 5. FINANCEIRO ---
+    document.getElementById('btnAddIncome').onclick = async () => {
+        const val = parseFloat(document.getElementById('incValue').value);
+        const desc = document.getElementById('incCategory').value;
+        if(val > 0) {
+            document.getElementById('incValue').value = '';
+            await syncToCloud("TRANSACTION", { desc, value: val });
+        }
+    };
+
+    document.getElementById('btnAddExpense').onclick = async () => {
+        const val = parseFloat(document.getElementById('expValue').value);
+        const desc = document.getElementById('expCategory').value;
+        if(val > 0) {
+            document.getElementById('expValue').value = '';
+            await syncToCloud("TRANSACTION", { desc, value: -val });
+        }
+    };
 
     function updateFinanceUI() {
         const total = transactions.reduce((acc, t) => acc + t.value, 0);
@@ -137,34 +125,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
             });
         }
-
-        const repList = document.getElementById('reportsList');
-        if(repList) {
-            repList.innerHTML = `<div class="report-card"><h3>Resumo Geral</h3><p>Movimentações: ${transactions.length}</p><p>Saldo: ${total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</p></div>`;
-        }
     }
 
-    // --- 5. NAVEGAÇÃO ENTRE TELAS ---
+    // --- 6. NAVEGAÇÃO ENTRE TELAS ---
     const views = ['viewMediators', 'viewDashboard', 'viewReports'];
     const navs = ['navMediators', 'navDashboard', 'navReports'];
 
     navs.forEach((navId, idx) => {
-        document.getElementById(navId).onclick = () => {
-            views.forEach(v => document.getElementById(v).style.display = 'none');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById(views[idx]).style.display = 'block';
-            document.getElementById(navId).classList.add('active');
-            document.getElementById('pageTitle').innerText = navId.replace('nav', '').toUpperCase();
-        };
+        const btn = document.getElementById(navId);
+        if(btn) {
+            btn.onclick = () => {
+                views.forEach(v => document.getElementById(v).style.display = 'none');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                
+                document.getElementById(views[idx]).style.display = 'block';
+                btn.classList.add('active');
+                document.getElementById('pageTitle').innerText = navId.replace('nav', '').toUpperCase();
+            };
+        }
     });
 
-    // --- 6. RENDERIZAÇÃO DA EQUIPE ---
+    // --- 7. RENDERIZAÇÃO DA EQUIPE ---
     function renderMediators() {
         const list = document.getElementById('mediatorList');
+        if(!list) return;
         list.innerHTML = '';
+        
         mediators.forEach(user => {
-            const isExp = user.daysLeft === 0;
+            const isExp = user.daysLeft <= 0;
             const row = document.createElement('div');
             row.className = 'table-row';
             row.innerHTML = `
@@ -172,48 +160,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <h4 class="row-name">${user.name}</h4>
                         <span class="role-badge">${user.role}</span>
-                        <span class="id-display">#${user.idForm}</span>
+                        <span class="id-display">#${user.idForm || 'Sem ID'}</span>
                     </div>
                 </div>
                 <div class="row-status-col">
-                    <span class="${isExp ? 'text-red' : 'text-green'}">${isExp ? 'EXPIRADO' : user.daysLeft + ' dias'}</span>
+                    <span class="status-label">TEMPO RESTANTE</span>
+                    <span class="${isExp ? 'text-red' : 'text-green'} font-weight-bold">${isExp ? 'EXPIRADO' : user.daysLeft + ' dias'}</span>
                 </div>
                 <div class="row-actions">
-                    <button class="action-btn text-green" onclick="renovar(${user.id})">+7d</button>
-                    <button class="action-btn text-yellow" onclick="mudarCargo(${user.id})">Cargo</button>
-                    <button class="action-btn text-red" onclick="excluir(${user.id})"><i class="fa-solid fa-trash"></i></button>
+                    <button class="action-btn text-green" onclick="renovar('${user.id}')">+7 DIAS</button>
+                    <button class="action-btn text-yellow" onclick="mudarCargo('${user.id}')">CARGO</button>
+                    <button class="action-btn text-red" onclick="excluir('${user.id}')"><i class="fa-solid fa-trash"></i></button>
                 </div>`;
             list.appendChild(row);
         });
         
         document.getElementById('totalCount').innerText = mediators.length;
-        document.getElementById('alertCount').innerText = mediators.filter(m => m.daysLeft === 0).length;
+        document.getElementById('alertCount').innerText = mediators.filter(m => m.daysLeft <= 0).length;
     }
 
-    // Funções Globais
-    window.renovar = (id) => {
-        const u = mediators.find(m => m.id === id);
-        u.daysLeft += 7;
-        saveData();
+    // --- FUNÇÕES DE AÇÃO DA EQUIPE ---
+    window.renovar = async (id) => {
+        const u = mediators.find(m => m.id == id);
+        if(u) {
+            u.daysLeft = parseInt(u.daysLeft || 0) + 7;
+            await syncToCloud("UPDATE_EQUIPE");
+        }
     };
 
-    window.mudarCargo = (id) => {
-        const u = mediators.find(m => m.id === id);
-        const novo = prompt("Cargo (ADM, SUP, AUX):", u.role);
-        if(novo) { u.role = novo.toUpperCase(); saveData(); }
+    window.mudarCargo = async (id) => {
+        const u = mediators.find(m => m.id == id);
+        if(u) {
+            const novo = prompt("Novo Cargo (Ex: ADM, SUP, AUX):", u.role);
+            if(novo) { 
+                u.role = novo.toUpperCase(); 
+                await syncToCloud("UPDATE_EQUIPE"); 
+            }
+        }
     };
 
-    window.excluir = (id) => {
-        if(confirm("Excluir?")) { mediators = mediators.filter(m => m.id !== id); saveData(); }
-    };
-
-    document.getElementById('btnExportCSV').onclick = () => {
-        let csv = "Data,Categoria,Valor\n";
-        transactions.forEach(t => csv += `${t.date},${t.desc},${t.value}\n`);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'financeiro.csv';
-        a.click();
+    window.excluir = async (id) => {
+        if(confirm("Deseja realmente excluir este membro?")) {
+            mediators = mediators.filter(m => m.id != id);
+            await syncToCloud("UPDATE_EQUIPE");
+        }
     };
 });
