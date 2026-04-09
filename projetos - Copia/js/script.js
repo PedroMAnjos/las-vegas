@@ -1,6 +1,6 @@
 // =========================================================================
-// URL DO BANCO DE DADOS OFICIAL (LAS VEGAS)
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbyurX1ehcrJs1jcc6rNEEAtcBWGY_MnT2J_9w6jpZe2x58hXqgtU0atW4S1LPleG4cD/exec";
+// SUA NOVA URL DE CONEXÃO
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbx0lYLhUxHbdF3Ij-I3yrFUlJaKV2QfjWr6lnIBxlPBmN8Ti7vAgYG00cwqpr_GmYkrQQ/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderMediators(); 
                     await syncToCloud("UPDATE_EQUIPE"); 
                 }
-                return; // Para a execução aqui
+                return;
             }
 
             // Lógica do botão CARGO
