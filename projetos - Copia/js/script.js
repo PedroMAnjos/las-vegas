@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const p = document.getElementById('loginPass').value;
             if (u === 'pedro' && p === 'mestre') {
                 localStorage.setItem('sysIsLoggedIn', 'true');
-                loginScreen.style.display = 'none';
-                appScreen.style.display = 'block';
+                if(loginScreen) loginScreen.style.display = 'none';
+                if(appScreen) appScreen.style.display = 'block';
                 loadData();
             } else {
                 document.getElementById('loginError').style.display = 'block';
@@ -67,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: JSON.stringify(body)
             });
-            // Não precisa recarregar tudo aqui porque a tela já atualizou localmente
         } catch(e) {
             alert("Erro ao salvar no Google. Verifique a internet.");
         }
@@ -96,10 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const desc = document.getElementById('incCategory').value;
             if(val > 0) {
                 document.getElementById('incValue').value = '';
-                // Atualiza a tela primeiro (Sensação de rapidez)
                 transactions.unshift({ date: new Date().toLocaleDateString('pt-BR'), desc, value: val });
                 updateFinanceUI();
-                // Envia pro Google escondido
                 await syncToCloud("TRANSACTION", { desc, value: val });
             }
         };
@@ -169,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 7. RENDERIZAÇÃO E BOTÕES DA EQUIPE ---
+    // --- 7. RENDERIZAÇÃO DA EQUIPE ---
     function renderMediators() {
         const list = document.getElementById('mediatorList');
         if(!list) return;
@@ -180,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'table-row';
             
-            // Substituímos os onclicks por classes e data-id para evitar bugs
             row.innerHTML = `
                 <div class="row-info">
                     <div>
@@ -206,26 +202,30 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const alertEl = document.getElementById('alertCount');
         if(alertEl) alertEl.innerText = mediators.filter(m => m.daysLeft <= 0).length;
+    }
 
-        // --- ATIVAR BOTÕES COM SEGURANÇA (EVENT LISTENERS) ---
-        
-        // 1. Botão Renovar
-        document.querySelectorAll('.btn-renovar').forEach(btn => {
-            btn.onclick = async () => {
-                const id = btn.dataset.id;
+    // --- 8. EVENTOS DE CLIQUE BLINDADOS (DELEGAÇÃO) ---
+    const listContainer = document.getElementById('mediatorList');
+    if (listContainer) {
+        listContainer.addEventListener('click', async (e) => {
+            
+            // Lógica do botão RENOVAR
+            const btnRenovar = e.target.closest('.btn-renovar');
+            if (btnRenovar) {
+                const id = btnRenovar.dataset.id;
                 const u = mediators.find(m => m.id == id);
                 if(u) {
                     u.daysLeft = parseInt(u.daysLeft || 0) + 7;
-                    renderMediators(); // Atualiza a tela imediatamente!
-                    await syncToCloud("UPDATE_EQUIPE"); // Salva no Google
+                    renderMediators(); 
+                    await syncToCloud("UPDATE_EQUIPE"); 
                 }
-            };
-        });
+                return; // Para a execução aqui
+            }
 
-        // 2. Botão Cargo
-        document.querySelectorAll('.btn-cargo').forEach(btn => {
-            btn.onclick = async () => {
-                const id = btn.dataset.id;
+            // Lógica do botão CARGO
+            const btnCargo = e.target.closest('.btn-cargo');
+            if (btnCargo) {
+                const id = btnCargo.dataset.id;
                 const u = mediators.find(m => m.id == id);
                 if(u) {
                     const novo = prompt("Novo Cargo (Ex: ADM, SUP, AUX):", u.role);
@@ -235,19 +235,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         await syncToCloud("UPDATE_EQUIPE"); 
                     }
                 }
-            };
-        });
+                return;
+            }
 
-        // 3. Botão Excluir
-        document.querySelectorAll('.btn-excluir').forEach(btn => {
-            btn.onclick = async () => {
-                const id = btn.dataset.id;
+            // Lógica do botão EXCLUIR
+            const btnExcluir = e.target.closest('.btn-excluir');
+            if (btnExcluir) {
+                const id = btnExcluir.dataset.id;
                 if(confirm("Deseja realmente excluir este membro?")) {
                     mediators = mediators.filter(m => m.id != id);
                     renderMediators();
                     await syncToCloud("UPDATE_EQUIPE");
                 }
-            };
+                return;
+            }
         });
     }
 });
