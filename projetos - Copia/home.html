@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="loginScreen" class="login-wrapper">
+        <div class="login-box">
+            <div class="login-logo"><i class="fa-solid fa-shield-halved"></i></div>
+            <h1 class="app-title" style="font-size: 1.8rem; margin-bottom: 5px;">Painel Admin</h1>
+            <p style="color:#888; font-size:0.8rem; margin-bottom:30px;">Acesso Restrito - Dev. Pedro Mestre dos Anjos</p>
+            
+            <div class="input-group">
+                <label>Usuário</label>
+                <input type="text" id="loginUser" class="custom-input" placeholder="admin">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="loginPass" class="custom-input" placeholder="admin">
+            </div>
+            
+            <button id="btnLogin" class="save-btn" style="margin-top: 20px;">ACESSAR SISTEMA</button>
+            <p id="loginError" style="color:var(--alert-red); font-size:0.8rem; margin-top:15px; display:none;">Credenciais inválidas.</p>
+        </div>
+    </div>
+
+    <div id="appScreen" style="display: none;">
+        <div class="main-layout">
+            
+            <nav class="side-nav">
+                <div class="nav-brand">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span class="app-title">ADMIN</span>
+                </div>
+                <div class="nav-item active" id="navMediators"><i class="fa-solid fa-users"></i><span>EQUIPE</span></div>
+                <div class="nav-item" id="navDashboard"><i class="fa-solid fa-calculator"></i><span>FINANCEIRO</span></div>
+                <div class="nav-item" id="navReports"><i class="fa-solid fa-file-contract"></i><span>RELATÓRIOS</span></div>
+                <div class="nav-item" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i><span>SAIR</span></div>
+            </nav>
+
+            <main class="content-area">
+                <header>
+                    <h1 class="app-title" id="pageTitle">EQUIPE</h1>
+                    <div class="header-actions">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Pedro Mestre dos Anjos</span>
+                        <div class="avatar-small"><img src="https://i.pravatar.cc/150?img=11"></div>
+                    </div>
+                </header>
+
+                <div id="viewMediators">
+                    <div class="desktop-controls">
+                        <div class="search-container">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" placeholder="Buscar por nome ou cargo..." id="searchInput">
+                        </div>
+                        <button class="save-btn btn-new-desktop" id="btnSyncDrive" style="background-color: #4285f4; color: white; margin-right: 10px;">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> SINCRONIZAR FORMS
+                        </button>
+                        <button class="save-btn btn-new-desktop" id="btnExportTeamCSV" style="background-color: #2ecc71; color: white; margin-right: 10px;">
+                            <i class="fa-solid fa-file-excel"></i> PLANILHA
+                        </button>
+                        <button class="save-btn btn-new-desktop" id="btnAddNewDesktop">
+                            <i class="fa-solid fa-plus"></i> NOVO MEMBRO
+                        </button>
+                    </div>
+                    
+                    <div class="filter-tabs">
+                        <button class="tab active" data-filter="all">TODOS</button>
+                        <button class="tab" data-filter="active">ATIVOS</button>
+                        <button class="tab" data-filter="expiring">VENCENDO</button>
+                        <button class="tab" data-filter="expired">EXPIRADOS</button>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">TOTAL DA EQUIPE</span>
+                            <span class="stat-number" id="totalCount">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label text-gold">STATUS ALERTA</span>
+                            <span class="stat-number text-red" id="alertCount">0</span>
+                        </div>
+                    </div>
+
+                    <div class="section-header">
+                        <h2>MONITORAMENTO DE ACESSOS</h2>
+                    </div>
+
+                    <main class="mediator-list" id="mediatorList"></main>
+                </div>
+
+                <div id="viewDashboard" style="display: none;">
+                    <div class="balance-container">
+                        <span class="balance-label">SALDO EM CAIXA</span>
+                        <h1 class="balance-value" id="displayBalance">R$ 0,00</h1>
+                    </div>
+
+                    <div class="finance-controls">
+                        <div class="fin-row income-group">
+                            <div class="fin-col-sel">
+                                <label>Entrada</label>
+                                <select id="incCategory" class="fin-select">
+                                    <option value="Contratação">Contratação</option>
+                                    <option value="Renovação">Renovação</option>
+                                    <option value="Patrocínio">Patrocínio</option>
+                                </select>
+                            </div>
+                            <div class="fin-col-val"><label>Valor</label><input type="number" id="incValue" class="fin-input-small" placeholder="0,00"></div>
+                            <button id="btnAddIncome" class="btn-fin-round income"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div class="fin-row expense-group">
+                            <div class="fin-col-sel">
+                                <label>Saída</label>
+                                <select id="expCategory" class="fin-select">
+                                    <option value="Pagamento">Pagamento</option>
+                                    <option value="Bot/Hospedagem">Bot/Hospedagem</option>
+                                    <option value="Campeonato">Campeonato</option>
+                                </select>
+                            </div>
+                            <div class="fin-col-val"><label>Valor</label><input type="number" id="expValue" class="fin-input-small" placeholder="0,00"></div>
+                            <button id="btnAddExpense" class="btn-fin-round expense"><i class="fa-solid fa-minus"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="section-header">
+                        <h2>EXTRATO</h2>
+                        <span class="online-count" id="transCount">0 registros</span>
+                    </div>
+                    <div class="transaction-list" id="transactionList"></div>
+                </div>
+
+                <div id="viewReports" style="display: none;">
+                    <div class="section-header">
+                        <h2>FECHAMENTO FINANCEIRO</h2>
+                        <button class="action-btn text-yellow" id="btnExportCSV"><i class="fa-solid fa-download"></i> EXPORTAR CSV</button>
+                    </div>
+                    <div id="reportsList" class="reports-container"></div>
+                </div>
+                
+                <div class="spacer-bottom"></div>
+            </main>
+
+            <button class="fab" id="fabAddUser"><i class="fa-solid fa-plus"></i></button>
+        </div>
+
+        <div id="idModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 id="modalIdTitle">ID do Formulário</h2>
+                <input type="hidden" id="idUserId">
+                
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>Código ID FORM</label>
+                    <input type="text" id="inputIdForm" class="custom-input" placeholder="Cole o ID do formulário aqui...">
+                </div>
+                
+                <button class="save-btn" id="btnSaveIdForm">SALVAR ID</button>
+            </div>
+        </div>
+        
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 class="modal-title-gold">Editar Membro</h2>
+                <input type="hidden" id="editUserId">
+                
+                <div class="input-group">
+                    <label>Nome</label>
+                    <input type="text" id="editName" class="custom-input">
+                </div>
+                <div class="input-group">
+                    <label>Cargo</label>
+                    <select id="editRole" class="custom-input">
+                        <option value="ADM">ADM</option>
+                        <option value="SUP">SUP</option>
+                        <option value="AUX">AUX</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Dias Restantes</label>
+                    <input type="number" id="editDays" class="custom-input">
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+                        <input type="checkbox" id="editIndeterminate" style="width:16px; height:16px;">
+                        <label for="editIndeterminate" style="margin:0; font-size:0.85rem; cursor:pointer;">Tempo Indeterminado (Vitalício)</label>
+                    </div>
+                </div>
+                <button class="save-btn" id="btnSaveEdit">SALVAR ALTERAÇÕES</button>
+            </div>
+        </div>
+        
+        <div id="addModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 class="modal-title-gold">Novo Cadastro</h2>
+                
+                <div class="input-group">
+                    <label>Nome</label>
+                    <input type="text" id="addName" class="custom-input" placeholder="Nome do membro">
+                </div>
+                <div class="input-group">
+                    <label>Cargo</label>
+                    <select id="addRole" class="custom-input">
+                        <option value="ADM">ADM</option>
+                        <option value="SUP">SUP</option>
+                        <option value="AUX">AUX</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Dias de Acesso</label>
+                    <input type="number" id="addDays" class="custom-input" placeholder="Ex: 30">
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+                        <input type="checkbox" id="addIndeterminate" style="width:16px; height:16px;">
+                        <label for="addIndeterminate" style="margin:0; font-size:0.85rem; cursor:pointer;">Tempo Indeterminado (Vitalício)</label>
+                    </div>
+                </div>
+                <button class="save-btn" id="btnSaveNew">CADASTRAR</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
