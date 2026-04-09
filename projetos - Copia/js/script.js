@@ -3,7 +3,7 @@
  */
 
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbxQRnCtiPJ9vWwCou-R3NctG39vdN6yKRz_k7NFNkxJe9fC_z4r81o7WIOaQ37zqi4-/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbyJCGLo6eMHyn0PPlFXdpC0A-3RIZEIFYGmDnnUi9PNieiXZm7wsklX22ZEyRIV6mDLrA/exec",
     REFRESH_RATE: 60000
 };
 
@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = {
         mediators: [],
-        filteredMediators: [],
         transactions: [],
         searchTerm: ""
     };
@@ -49,14 +48,21 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchData: async () => {
             try {
                 const res = await fetch(CONFIG.API_URL);
+
+                if (!res.ok) throw new Error("Erro na requisição");
+
                 const data = await res.json();
+
+                console.log("API DATA:", data);
 
                 state.mediators = data.equipe || [];
                 state.transactions = data.financeiro || [];
 
                 ui.renderAll();
+
             } catch (e) {
                 console.error("Erro API:", e);
+                alert("Erro ao conectar com servidor.");
             }
         }
     };
@@ -76,12 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             list.forEach(user => {
 
-                const role = user.role.toLowerCase();
+                const role = (user.role || "").toLowerCase();
 
                 let roleClass = '';
                 if (role.includes('adm')) roleClass = 'adm';
-                if (role.includes('sup')) roleClass = 'sup';
-                if (role.includes('aux')) roleClass = 'aux';
+                else if (role.includes('sup')) roleClass = 'sup';
+                else if (role.includes('aux')) roleClass = 'aux';
 
                 const row = document.createElement('div');
                 row.className = 'table-row';
@@ -111,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.renderMediators();
 
             const balance = state.transactions.reduce((acc, t) => acc + (t.value || 0), 0);
+
             const el = document.getElementById('displayBalance');
             if (el) {
                 el.innerText = balance.toLocaleString('pt-BR', {
@@ -139,13 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         events: () => {
 
-            // SEARCH
-            document.getElementById('searchInput').addEventListener('input', e => {
-                state.searchTerm = e.target.value.toLowerCase();
-                ui.renderMediators();
-            });
+            const search = document.getElementById('searchInput');
+            if (search) {
+                search.addEventListener('input', e => {
+                    state.searchTerm = e.target.value.toLowerCase();
+                    ui.renderMediators();
+                });
+            }
 
-            // NAV
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.onclick = () => {
                     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -153,12 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             });
 
-            // LOGOUT
-            document.getElementById('btnLogout').onclick = auth.logout;
+            const logoutBtn = document.getElementById('btnLogout');
+            if (logoutBtn) logoutBtn.onclick = auth.logout;
         }
     };
 
-    // ================= START =================
     document.getElementById('btnLogin').onclick = auth.login;
     auth.check();
 });
