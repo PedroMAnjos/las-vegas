@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let mediators = [];
     let transactions = [];
+    let termoPesquisa = ""; // Armazena o que o usuário digita
 
     // --- 1. SISTEMA DE LOGIN ---
     if (localStorage.getItem('sysIsLoggedIn') === 'true') {
@@ -24,9 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const p = document.getElementById('loginPass').value;
             if (u === 'pedro' && p === 'mestre') {
                 localStorage.setItem('sysIsLoggedIn', 'true');
-                if(loginScreen) loginScreen.style.display = 'none';
-                if(appScreen) appScreen.style.display = 'block';
-                loadData();
+                location.reload();
             } else {
                 document.getElementById('loginError').style.display = 'block';
             }
@@ -43,7 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 2. CARREGAR DADOS ---
+    // --- 2. BARRA DE PESQUISA (NOVO) ---
+    // Procura o input dentro de uma div com classe 'search-bar' ou um input de pesquisa
+    const searchInput = document.querySelector('.search-bar input') || document.querySelector('input[type="text"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            termoPesquisa = e.target.value.toLowerCase();
+            renderMediators(); // Re-renderiza a cada letra digitada
+        });
+    }
+
+    // --- 3. CARREGAR DADOS ---
     async function loadData() {
         try {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
@@ -56,23 +65,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 3. SALVAR MUDANÇAS (SUPORTE A EXCLUSÃO E FINANCEIRO) ---
+    // --- 4. SALVAR MUDANÇAS ---
     async function syncToCloud(type, extraData = null) {
         let body = {};
-        
         if (type === "TRANSACTION") {
             body = { type, ...extraData };
         } else if (type === "UPDATE_EQUIPE") {
             body = { type: "UPDATE_EQUIPE", data: mediators };
         } else if (type === "DELETE_MEMBER") {
-            // Envia o nome para a aba 'Excluidos' e a nova lista para 'EQUIPE'
             body = { type: "DELETE_MEMBER", deletedName: extraData.name, data: mediators };
         }
 
         try {
             await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
         } catch(e) {
-            console.log("Erro ao salvar. Verifique a conexão.");
+            console.log("Erro ao salvar.");
         }
     }
 
@@ -81,96 +88,30 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFinanceUI();
     }
 
-    // --- 4. BOTÕES DE INTERFACE ---
-    const btnSync = document.getElementById('btnSyncDrive');
-    if(btnSync) {
-        btnSync.onclick = async () => {
-            btnSync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ATUALIZANDO...';
-            await loadData();
-            btnSync.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> ATUALIZAR DADOS';
-        };
-    }
-
-    function adicionarMembroManual() {
-        const nome = prompt("Nome do novo membro:");
-        if (!nome || nome.trim() === "") return;
-        
-        const cargo = prompt("Cargo (Ex: ADM, SUP, AUX):", "PENDENTE");
-        
-        mediators.unshift({
-            id: new Date().getTime(),
-            name: nome.toUpperCase(),
-            role: cargo ? cargo.toUpperCase() : "PENDENTE",
-            daysLeft: 0,
-            idForm: "Manual"
-        });
-        
-        renderMediators();
-        syncToCloud("UPDATE_EQUIPE");
-    }
-
-    const btnNovoAmarelo = document.getElementById('btnNovoMembro');
-    const btnNovoFlutuante = document.getElementById('btnNovoFlutuante');
-    if(btnNovoAmarelo) btnNovoAmarelo.onclick = adicionarMembroManual;
-    if(btnNovoFlutuante) btnNovoFlutuante.onclick = adicionarMembroManual;
-
-    // --- 5. FINANCEIRO ---
-    function updateFinanceUI() {
-        const total = transactions.reduce((acc, t) => acc + t.value, 0);
-        const display = document.getElementById('displayBalance');
-        if(display) {
-            display.innerText = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-            display.className = `balance-value ${total >= 0 ? 'positive' : 'negative'}`;
-        }
-
-        const list = document.getElementById('transactionList');
-        if(list) {
-            list.innerHTML = '';
-            transactions.forEach(t => {
-                const isInc = t.value >= 0;
-                list.innerHTML += `
-                    <div class="trans-item">
-                        <div class="trans-left">
-                            <div class="trans-icon ${isInc?'green':'red'}"><i class="fa-solid ${isInc?'fa-arrow-up':'fa-arrow-down'}"></i></div>
-                            <div><h4>${t.desc}</h4><p style="font-size:0.7rem; color:#888;">${t.date}</p></div>
-                        </div>
-                        <div class="${isInc?'text-green':'text-red'} font-weight-bold">${Math.abs(t.value).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</div>
-                    </div>`;
-            });
-        }
-    }
-
-    // --- 6. NAVEGAÇÃO ---
-    const views = ['viewMediators', 'viewDashboard', 'viewReports'];
-    const navs = ['navMediators', 'navDashboard', 'navReports'];
-
-    navs.forEach((navId, idx) => {
-        const btn = document.getElementById(navId);
-        if(btn) {
-            btn.onclick = () => {
-                views.forEach(v => {
-                    const el = document.getElementById(v);
-                    if(el) el.style.display = 'none';
-                });
-                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                const targetView = document.getElementById(views[idx]);
-                if(targetView) targetView.style.display = 'block';
-                btn.classList.add('active');
-            };
-        }
-    });
-
-    // --- 7. RENDERIZAR EQUIPE ---
+    // --- 5. RENDERIZAR EQUIPE (COM PESQUISA E CARGOS ILIMITADOS) ---
     function renderMediators() {
         const list = document.getElementById('mediatorList');
         if(!list) return;
         list.innerHTML = '';
         
-        mediators.forEach(user => {
-            const isExp = user.daysLeft <= 0;
+        // Aplica o filtro da barra de pesquisa
+        const membrosFiltrados = mediators.filter(m => 
+            m.name.toLowerCase().includes(termoPesquisa) || 
+            m.role.toLowerCase().includes(termoPesquisa)
+        );
+
+        membrosFiltrados.forEach(user => {
+            const cargo = user.role.toUpperCase();
+            
+            // LÓGICA DE CARGOS ILIMITADOS DEFINIDA NO JS
+            const isIlimitado = cargo.includes("SUPORTE") || cargo.includes("AUXILIAR");
+            const isExp = !isIlimitado && user.daysLeft <= 0;
+
+            const textoTempo = isIlimitado ? "ILIMITADO" : (isExp ? "EXPIRADO" : user.daysLeft + " dias");
+            const corTempo = isExp ? "text-red" : "text-green";
+
             const row = document.createElement('div');
             row.className = 'table-row';
-            
             row.innerHTML = `
                 <div class="row-info">
                     <div>
@@ -181,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="row-status-col">
                     <span class="status-label">TEMPO RESTANTE</span>
-                    <span class="${isExp ? 'text-red' : 'text-green'} font-weight-bold">${isExp ? 'EXPIRADO' : user.daysLeft + ' dias'}</span>
+                    <span class="${corTempo} font-weight-bold">${textoTempo}</span>
                 </div>
                 <div class="row-actions">
                     <button class="action-btn text-green btn-renovar" data-id="${user.id}">+7 DIAS</button>
@@ -191,26 +132,42 @@ document.addEventListener('DOMContentLoaded', () => {
             list.appendChild(row);
         });
         
-        if(document.getElementById('totalCount')) document.getElementById('totalCount').innerText = mediators.length;
-        if(document.getElementById('alertCount')) document.getElementById('alertCount').innerText = mediators.filter(m => m.daysLeft <= 0).length;
+        if(document.getElementById('totalCount')) document.getElementById('totalCount').innerText = membrosFiltrados.length;
+        if(document.getElementById('alertCount')) {
+            const expirados = membrosFiltrados.filter(m => {
+                const c = m.role.toUpperCase();
+                return !c.includes("SUPORTE") && !c.includes("AUXILIAR") && m.daysLeft <= 0;
+            }).length;
+            document.getElementById('alertCount').innerText = expirados;
+        }
     }
 
-    // --- 8. EVENTOS DE CLIQUE (LIXEIRA E EDIÇÃO) ---
+    // --- 6. EVENTOS DE CLIQUE (BOTÕES FUNCIONAIS) ---
     const listContainer = document.getElementById('mediatorList');
     if (listContainer) {
         listContainer.addEventListener('click', async (e) => {
-            const id = e.target.closest('button')?.dataset.id;
-            if(!id) return;
+            // Garante que pegamos o botão mesmo se clicar no ícone dentro dele
+            const btn = e.target.closest('button');
+            if(!btn) return;
+            
+            const id = btn.dataset.id;
             const u = mediators.find(m => m.id == id);
+            if(!u) return;
 
-            if (e.target.closest('.btn-renovar')) {
+            if (btn.classList.contains('btn-renovar')) {
                 u.daysLeft = parseInt(u.daysLeft || 0) + 7;
                 renderMediators();
                 await syncToCloud("UPDATE_EQUIPE");
-            } else if (e.target.closest('.btn-cargo')) {
+            } 
+            else if (btn.classList.contains('btn-cargo')) {
                 const novo = prompt("Novo Cargo:", u.role);
-                if(novo) { u.role = novo.toUpperCase(); renderMediators(); await syncToCloud("UPDATE_EQUIPE"); }
-            } else if (e.target.closest('.btn-excluir')) {
+                if(novo) { 
+                    u.role = novo.toUpperCase(); 
+                    renderMediators(); 
+                    await syncToCloud("UPDATE_EQUIPE"); 
+                }
+            } 
+            else if (btn.classList.contains('btn-excluir')) {
                 if(confirm(`Deseja EXCLUIR e bloquear ${u.name}?`)) {
                     const deletedName = u.name;
                     mediators = mediators.filter(m => m.id != id);
@@ -221,7 +178,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 9. ATUALIZAÇÃO AUTOMÁTICA (15s) ---
+    // --- 7. FINANCEIRO E NAVEGAÇÃO ---
+    function updateFinanceUI() {
+        const total = transactions.reduce((acc, t) => acc + t.value, 0);
+        const display = document.getElementById('displayBalance');
+        if(display) {
+            display.innerText = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            display.className = `balance-value ${total >= 0 ? 'positive' : 'negative'}`;
+        }
+    }
+
+    // --- 8. ATUALIZAÇÃO AUTOMÁTICA (15s) ---
     setInterval(() => {
         if (localStorage.getItem('sysIsLoggedIn') === 'true') {
             loadData();
