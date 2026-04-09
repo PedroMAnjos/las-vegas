@@ -4,15 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let mediators = [];
     let termoPesquisa = "";
 
-    // --- 1. LOGIN ---
-    const checkLogin = () => {
-        if (localStorage.getItem('sysIsLoggedIn') === 'true') {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'block';
-            loadData();
-        }
-    };
-    checkLogin();
+    // --- LOGIN ---
+    if (localStorage.getItem('sysIsLoggedIn') === 'true') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        loadData();
+    }
 
     document.getElementById('btnLogin').onclick = () => {
         const u = document.getElementById('loginUser').value;
@@ -25,20 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    document.getElementById('btnLogout').onclick = () => {
-        if(confirm("Deseja sair?")) {
-            localStorage.removeItem('sysIsLoggedIn');
-            location.reload();
-        }
-    };
-
-    // --- 2. CARREGAR DADOS DO BANCO (GET) ---
+    // --- CARREGAR DADOS ---
     async function loadData() {
         try {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
             if (data.equipe) {
-                // TRAVA ANTI-DUPLICATA NO FRONT
                 const seen = new Set();
                 mediators = data.equipe.filter(m => {
                     const nome = m.name.toLowerCase().trim();
@@ -46,10 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 renderMediators();
             }
-        } catch (e) { console.error("Erro ao conectar com a planilha."); }
+        } catch (e) { console.error("Erro no banco."); }
     }
 
-    // --- 3. RENDERIZAÇÃO (ILIMITADOS + FILTRO) ---
+    // --- RENDERIZAÇÃO ---
     function renderMediators() {
         const list = document.getElementById('mediatorList');
         if(!list) return;
@@ -73,72 +62,32 @@ document.addEventListener('DOMContentLoaded', () => {
             row.innerHTML = `
                 <div class="row-info">
                     <h4 class="row-name" style="font-family:'Cinzel'">${user.name}</h4>
-                    <span class="text-gold" style="font-size:0.7rem;">${user.role} | #${user.idForm || 'ID'}</span>
+                    <span style="color:var(--primary-gold); font-size:0.7rem;">${user.role} | #${user.idForm || 'ID'}</span>
                 </div>
                 <div style="text-align: center;">
-                    <span class="${timeColor}" style="font-weight:bold; font-family:'Cinzel'; font-size:1rem;">${timeTxt}</span>
+                    <span class="${timeColor}" style="font-weight:bold; font-family:'Cinzel';">${timeTxt}</span>
                 </div>
-                <div class="row-actions" style="display:flex; justify-content:flex-end; gap:8px;">
-                    <button class="action-btn green btn-renovar" data-id="${user.id}">+7</button>
-                    <button class="action-btn gold btn-edit" data-id="${user.id}"><i class="fa-solid fa-pen"></i></button>
-                    <button class="action-btn text-red btn-delete" data-id="${user.id}" style="background:none;"><i class="fa-solid fa-trash"></i></button>
+                <div class="row-actions" style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button class="action-btn btn-renovar" data-id="${user.id}" style="color:var(--green-online); background:none; border:none; cursor:pointer;">+7</button>
+                    <button class="action-btn btn-edit" data-id="${user.id}" style="color:var(--primary-gold); background:none; border:none; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
                 </div>`;
             list.appendChild(row);
         });
 
         document.getElementById('totalCount').innerText = filtrados.length;
-        document.getElementById('alertCount').innerText = filtrados.filter(m => {
-            const r = m.role.toUpperCase();
-            return !r.includes("SUP") && !r.includes("AUX") && m.daysLeft <= 0;
-        }).length;
     }
 
-    // --- 4. EVENTOS DE BANCO DE DADOS (POST) ---
-    document.getElementById('mediatorList').onclick = async (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        const id = btn.dataset.id;
-        const u = mediators.find(m => m.id == id);
-
-        if (btn.classList.contains('btn-renovar')) {
-            u.daysLeft = (parseInt(u.daysLeft) || 0) + 7;
-            renderMediators();
-            await syncToCloud("UPDATE_EQUIPE");
-        } else if (btn.classList.contains('btn-edit')) {
-            document.getElementById('editUserId').value = u.id;
-            document.getElementById('editName').value = u.name;
-            document.getElementById('editRole').value = u.role;
-            document.getElementById('editDays').value = u.daysLeft;
-            document.getElementById('editModal').style.display = 'flex';
-        } else if (btn.classList.contains('btn-delete')) {
-            if(confirm(`Bloquear ${u.name}?`)) {
-                mediators = mediators.filter(m => m.id != id);
-                renderMediators();
-                await syncToCloud("DELETE_MEMBER", { name: u.name });
-            }
-        }
-    };
-
-    // --- 5. SINCRONIA FINAL ---
-    async function syncToCloud(type, extra = null) {
-        let body = { type, data: mediators };
-        if (type === "DELETE_MEMBER") body = { type, deletedName: extra.name, data: mediators };
-        try {
-            await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
-        } catch(e) { console.error("Falha ao salvar no banco."); }
-    }
-
-    document.getElementById('btnSyncDrive').onclick = () => {
-        document.getElementById('btnSyncDrive').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SYNC';
-        loadData().finally(() => {
-            document.getElementById('btnSyncDrive').innerHTML = '<i class="fa-solid fa-rotate"></i> SYNC';
-        });
-    };
+    // Navegação de abas
+    const navs = {'navMediators': 'viewMediators', 'navDashboard': 'viewDashboard', 'navReports': 'viewReports'};
+    Object.keys(navs).forEach(id => {
+        document.getElementById(id).onclick = () => {
+            Object.values(navs).forEach(v => document.getElementById(v).style.display = 'none');
+            document.getElementById(navs[id]).style.display = 'block';
+        };
+    });
 
     document.getElementById('searchInput').oninput = (e) => {
         termoPesquisa = e.target.value.toLowerCase();
         renderMediators();
     };
-
-    document.querySelector('.close-modal').onclick = () => document.getElementById('editModal').style.display = 'none';
 });
