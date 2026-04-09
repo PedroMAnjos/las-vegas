@@ -1,20 +1,17 @@
 // =========================================================================
-// SUA URL DE CONEXÃO ATUALIZADA
+// SUA URL DE CONEXÃO DEFINITIVA (MANTIDA CONFORME SOLICITADO)
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzbJJ7eTembJFbAaBxI7aFCo87lN_-RBIsb5HYgapo1YpEMCVcKSUlGza_tOGPzG9tAQw/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    const loginScreen = document.getElementById('loginScreen');
-    const appScreen = document.getElementById('appScreen');
-    
     let mediators = [];
     let transactions = [];
-    let termoPesquisa = ""; // Armazena o que o usuário digita
+    let termoPesquisa = "";
 
-    // --- 1. SISTEMA DE LOGIN ---
+    // --- 1. LOGIN ---
     if (localStorage.getItem('sysIsLoggedIn') === 'true') {
-        if(loginScreen) loginScreen.style.display = 'none';
-        if(appScreen) appScreen.style.display = 'block';
+        if(document.getElementById('loginScreen')) document.getElementById('loginScreen').style.display = 'none';
+        if(document.getElementById('appScreen')) document.getElementById('appScreen').style.display = 'block';
         loadData();
     }
 
@@ -32,23 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    const btnLogout = document.getElementById('btnLogout');
-    if(btnLogout) {
-        btnLogout.onclick = () => {
-            if(confirm("Deseja sair do sistema?")) {
-                localStorage.removeItem('sysIsLoggedIn');
-                location.reload();
-            }
-        };
-    }
-
-    // --- 2. BARRA DE PESQUISA (NOVO) ---
-    // Procura o input dentro de uma div com classe 'search-bar' ou um input de pesquisa
-    const searchInput = document.querySelector('.search-bar input') || document.querySelector('input[type="text"]');
+    // --- 2. BARRA DE PESQUISA FUNCIONAL ---
+    const searchInput = document.getElementById('inputPesquisa');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             termoPesquisa = e.target.value.toLowerCase();
-            renderMediators(); // Re-renderiza a cada letra digitada
+            renderMediators();
         });
     }
 
@@ -61,51 +47,28 @@ document.addEventListener('DOMContentLoaded', () => {
             transactions = data.financeiro || [];
             renderAll();
         } catch (e) {
-            console.log("Sincronizando com o Banco de Dados...");
+            console.log("Erro ao carregar dados.");
         }
     }
 
-    // --- 4. SALVAR MUDANÇAS ---
-    async function syncToCloud(type, extraData = null) {
-        let body = {};
-        if (type === "TRANSACTION") {
-            body = { type, ...extraData };
-        } else if (type === "UPDATE_EQUIPE") {
-            body = { type: "UPDATE_EQUIPE", data: mediators };
-        } else if (type === "DELETE_MEMBER") {
-            body = { type: "DELETE_MEMBER", deletedName: extraData.name, data: mediators };
-        }
-
-        try {
-            await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
-        } catch(e) {
-            console.log("Erro ao salvar.");
-        }
-    }
-
-    function renderAll() {
-        renderMediators();
-        updateFinanceUI();
-    }
-
-    // --- 5. RENDERIZAR EQUIPE (COM PESQUISA E CARGOS ILIMITADOS) ---
+    // --- 4. RENDERIZAR EQUIPE (LÓGICA ILIMITADA E PESQUISA) ---
     function renderMediators() {
         const list = document.getElementById('mediatorList');
         if(!list) return;
         list.innerHTML = '';
         
-        // Aplica o filtro da barra de pesquisa
-        const membrosFiltrados = mediators.filter(m => 
-            m.name.toLowerCase().includes(termoPesquisa) || 
-            m.role.toLowerCase().includes(termoPesquisa)
+        // Filtra os membros baseado na barra de pesquisa
+        const filtrados = mediators.filter(m => 
+            (m.name || "").toLowerCase().includes(termoPesquisa) || 
+            (m.role || "").toLowerCase().includes(termoPesquisa)
         );
 
-        membrosFiltrados.forEach(user => {
-            const cargo = user.role.toUpperCase();
+        filtrados.forEach(user => {
+            const cargo = (user.role || "").toUpperCase();
             
-            // LÓGICA DE CARGOS ILIMITADOS DEFINIDA NO JS
+            // REGRA: SUPORTE E AUXILIAR SÃO ILIMITADOS NO VISUAL
             const isIlimitado = cargo.includes("SUPORTE") || cargo.includes("AUXILIAR");
-            const isExp = !isIlimitado && user.daysLeft <= 0;
+            const isExp = !isIlimitado && (parseInt(user.daysLeft) <= 0);
 
             const textoTempo = isIlimitado ? "ILIMITADO" : (isExp ? "EXPIRADO" : user.daysLeft + " dias");
             const corTempo = isExp ? "text-red" : "text-green";
@@ -131,28 +94,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
             list.appendChild(row);
         });
-        
-        if(document.getElementById('totalCount')) document.getElementById('totalCount').innerText = membrosFiltrados.length;
+
+        // Atualiza contadores
+        if(document.getElementById('totalCount')) document.getElementById('totalCount').innerText = filtrados.length;
         if(document.getElementById('alertCount')) {
-            const expirados = membrosFiltrados.filter(m => {
-                const c = m.role.toUpperCase();
+            const expCount = filtrados.filter(m => {
+                const c = (m.role || "").toUpperCase();
                 return !c.includes("SUPORTE") && !c.includes("AUXILIAR") && m.daysLeft <= 0;
             }).length;
-            document.getElementById('alertCount').innerText = expirados;
+            document.getElementById('alertCount').innerText = expCount;
         }
     }
 
-    // --- 6. EVENTOS DE CLIQUE (BOTÕES FUNCIONAIS) ---
+    // --- 5. EVENTOS DE CLIQUE (LIXEIRA, CARGO E RENOVAR) ---
     const listContainer = document.getElementById('mediatorList');
     if (listContainer) {
-        listContainer.addEventListener('click', async (e) => {
-            // Garante que pegamos o botão mesmo se clicar no ícone dentro dele
+        listContainer.onclick = async (e) => {
             const btn = e.target.closest('button');
-            if(!btn) return;
+            if (!btn) return;
             
             const id = btn.dataset.id;
             const u = mediators.find(m => m.id == id);
-            if(!u) return;
+            if (!u) return;
 
             if (btn.classList.contains('btn-renovar')) {
                 u.daysLeft = parseInt(u.daysLeft || 0) + 7;
@@ -160,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await syncToCloud("UPDATE_EQUIPE");
             } 
             else if (btn.classList.contains('btn-cargo')) {
-                const novo = prompt("Novo Cargo:", u.role);
+                const novo = prompt("Novo Cargo para " + u.name + ":", u.role);
                 if(novo) { 
                     u.role = novo.toUpperCase(); 
                     renderMediators(); 
@@ -168,30 +131,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } 
             else if (btn.classList.contains('btn-excluir')) {
-                if(confirm(`Deseja EXCLUIR e bloquear ${u.name}?`)) {
-                    const deletedName = u.name;
+                if(confirm("Deseja EXCLUIR e bloquear " + u.name + "?")) {
+                    const nomeDeletado = u.name;
                     mediators = mediators.filter(m => m.id != id);
                     renderMediators();
-                    await syncToCloud("DELETE_MEMBER", { name: deletedName });
+                    await syncToCloud("DELETE_MEMBER", { name: nomeDeletado });
                 }
             }
-        });
+        };
     }
 
-    // --- 7. FINANCEIRO E NAVEGAÇÃO ---
-    function updateFinanceUI() {
-        const total = transactions.reduce((acc, t) => acc + t.value, 0);
-        const display = document.getElementById('displayBalance');
-        if(display) {
-            display.innerText = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-            display.className = `balance-value ${total >= 0 ? 'positive' : 'negative'}`;
-        }
+    // --- 6. COMUNICAÇÃO ---
+    async function syncToCloud(type, extraData = null) {
+        let body = { type, data: mediators };
+        if (type === "DELETE_MEMBER") body = { type, deletedName: extraData.name, data: mediators };
+        try {
+            await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
+        } catch(e) { console.log("Falha ao sincronizar."); }
     }
 
-    // --- 8. ATUALIZAÇÃO AUTOMÁTICA (15s) ---
+    function renderAll() {
+        renderMediators();
+    }
+
+    // Atualização Automática
     setInterval(() => {
-        if (localStorage.getItem('sysIsLoggedIn') === 'true') {
-            loadData();
-        }
+        if (localStorage.getItem('sysIsLoggedIn') === 'true') loadData();
     }, 15000);
 });
