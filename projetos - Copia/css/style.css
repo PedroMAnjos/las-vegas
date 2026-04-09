@@ -1,199 +1,112 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Inter", sans-serif;
+:root {
+    --bg-dark: #1b1915;
+    --card-bg: #26211a;
+    --primary-gold: #eebc1d;
 }
 
 body {
-    background: linear-gradient(135deg, #0f172a, #020617);
+    background-color: var(--bg-dark);
+    font-family: 'Roboto', sans-serif;
     color: #fff;
 }
 
 /* LOGIN */
-.login {
-    width: 320px;
-    margin: 120px auto;
-    background: rgba(15, 23, 42, 0.9);
-    padding: 30px;
-    border-radius: 16px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+.login-wrapper {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: var(--card-bg);
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.login h2 {
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.login input {
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    outline: none;
-    background: #1e293b;
-    color: #fff;
-}
-
-.login button {
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.login button:hover {
-    transform: scale(1.05);
-}
-
-/* APP */
-.app {
-    display: none;
-    padding: 30px;
-}
-
-/* HEADER */
-header {
-    display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    background: rgba(30, 41, 59, 0.6);
-    padding: 15px 25px;
-    border-radius: 16px;
-    backdrop-filter: blur(10px);
 }
 
-header h1 {
-    font-size: 20px;
+.login-box {
+    background: var(--bg-dark);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid var(--primary-gold);
+    width: 300px;
+    text-align: center;
 }
 
-#clock {
-    opacity: 0.7;
-}
-
-#btnLogout {
-    background: #ef4444;
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-}
-
-/* TOP BAR */
-.top {
-    margin: 20px 0;
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-#searchInput {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: #1e293b;
-    color: white;
-}
-
-#displayBalance {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-weight: bold;
-}
-
-/* TABLE */
-.table {
-    background: rgba(30, 41, 59, 0.6);
-    border-radius: 16px;
-    padding: 15px;
-    backdrop-filter: blur(10px);
-}
-
-.table-header {
-    display: flex;
-    justify-content: space-between;
-    opacity: 0.6;
+.login-box input {
+    width: 100%;
+    margin: 10px 0;
     padding: 10px;
 }
 
-.table-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(51, 65, 85, 0.6);
-    padding: 12px;
-    margin-top: 8px;
-    border-radius: 12px;
-    transition: 0.2s;
+.save-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--primary-gold);
+    border: none;
+    cursor: pointer;
 }
 
-.table-row:hover {
-    transform: scale(1.01);
-    background: rgba(71, 85, 105, 0.8);
+/* LAYOUT */
+.main-layout {
+    display: flex;
+    height: 100vh;
+}
+
+.side-nav {
+    width: 200px;
+    background: #0d0b08;
+    padding: 20px;
+}
+
+.nav-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.content-area {
+    flex: 1;
+    padding: 20px;
+}
+
+/* LISTA */
+.table-row {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.row-info {
+    display: flex;
+    gap: 10px;
+}
+
+.row-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
 }
 
 .row-name {
     font-weight: bold;
 }
 
-/* BADGES */
 .role-badge {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 6px;
-    margin-top: 5px;
-    display: inline-block;
+    font-size: 12px;
 }
 
-.adm {
-    background: #ef4444;
-}
+.badge-adm { color: gold; }
+.badge-sup { color: purple; }
+.badge-aux { color: cyan; }
 
-.sup {
-    background: #f59e0b;
-}
-
-.aux {
-    background: #22c55e;
-}
-
-/* DAYS */
 .days-count {
-    font-weight: bold;
-    font-size: 16px;
+    font-size: 18px;
 }
 
-/* BUTTON */
 .action-btn {
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: none;
+    margin-left: 10px;
     cursor: pointer;
 }
 
-.btn-edit {
-    background: #3b82f6;
-    color: white;
-}
-
-/* FOOTER */
-.footer {
-    margin-top: 15px;
-    opacity: 0.6;
-}
-
-/* RESPONSIVO */
-@media(max-width: 768px){
-    .top {
-        flex-direction: column;
-    }
-}
+.text-red { color: red; }
+.text-yellow { color: gold; }
