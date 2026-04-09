@@ -1,6 +1,6 @@
 // =========================================================================
-// SUA NOVA URL DE CONEXÃO
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbx0lYLhUxHbdF3Ij-I3yrFUlJaKV2QfjWr6lnIBxlPBmN8Ti7vAgYG00cwqpr_GmYkrQQ/exec";
+// SUA NOVA URL DE CONEXÃO DEFINITIVA
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxyMFcjAtjdQ8oIUQWXbx4cFkOmjXpl2rVjPvZ2djd1sDNO47dhh-ivJKrNAlwbULv8Lg/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (listContainer) {
         listContainer.addEventListener('click', async (e) => {
             
-            // Lógica do botão RENOVAR
             const btnRenovar = e.target.closest('.btn-renovar');
             if (btnRenovar) {
                 const id = btnRenovar.dataset.id;
@@ -222,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Lógica do botão CARGO
             const btnCargo = e.target.closest('.btn-cargo');
             if (btnCargo) {
                 const id = btnCargo.dataset.id;
@@ -238,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Lógica do botão EXCLUIR
             const btnExcluir = e.target.closest('.btn-excluir');
             if (btnExcluir) {
                 const id = btnExcluir.dataset.id;
