@@ -1,6 +1,6 @@
 // =========================================================================
-// SUA URL DE CONEXÃO DEFINITIVA
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzd7gbs6vAiaW4ZZ4169ncCkmC2ZY2ZYNbNIZ9_IX1RAwtK2t0ocFAINhmaQ_tw_XEiaQ/exec";
+// SUA URL DE CONEXÃO ATUALIZADA
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxp-lCsSgqt4bzw-9cDFtQ7GgxtuVwUo7XibpevdFLqKOnZLc9iWCnElDOrX73YpavXYg/exec";
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -52,11 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
             transactions = data.financeiro || [];
             renderAll();
         } catch (e) {
-            console.log("Aguardando sincronização com o banco...");
+            console.log("Sincronizando com o Banco de Dados...");
         }
     }
 
-    // --- 3. SALVAR MUDANÇAS (COM SUPORTE A LISTA NEGRA) ---
+    // --- 3. SALVAR MUDANÇAS (SUPORTE A EXCLUSÃO E FINANCEIRO) ---
     async function syncToCloud(type, extraData = null) {
         let body = {};
         
@@ -65,14 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (type === "UPDATE_EQUIPE") {
             body = { type: "UPDATE_EQUIPE", data: mediators };
         } else if (type === "DELETE_MEMBER") {
-            // Avisa o servidor quem foi excluido para ir para a aba 'Excluidos'
+            // Envia o nome para a aba 'Excluidos' e a nova lista para 'EQUIPE'
             body = { type: "DELETE_MEMBER", deletedName: extraData.name, data: mediators };
         }
 
         try {
             await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
         } catch(e) {
-            console.log("Aguardando internet para salvar...");
+            console.log("Erro ao salvar. Verifique a conexão.");
         }
     }
 
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFinanceUI();
     }
 
-    // --- 4. BOTÕES DE ATUALIZAR E ADICIONAR ---
+    // --- 4. BOTÕES DE INTERFACE ---
     const btnSync = document.getElementById('btnSyncDrive');
     if(btnSync) {
         btnSync.onclick = async () => {
@@ -92,10 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function adicionarMembroManual() {
-        const nome = prompt("Digite o nome do novo membro:");
+        const nome = prompt("Nome do novo membro:");
         if (!nome || nome.trim() === "") return;
         
-        const cargo = prompt("Qual o cargo? (Ex: ADM, SUP, AUX):", "PENDENTE");
+        const cargo = prompt("Cargo (Ex: ADM, SUP, AUX):", "PENDENTE");
         
         mediators.unshift({
             id: new Date().getTime(),
@@ -115,34 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnNovoFlutuante) btnNovoFlutuante.onclick = adicionarMembroManual;
 
     // --- 5. FINANCEIRO ---
-    const btnAddInc = document.getElementById('btnAddIncome');
-    if(btnAddInc) {
-        btnAddInc.onclick = async () => {
-            const val = parseFloat(document.getElementById('incValue').value);
-            const desc = document.getElementById('incCategory').value;
-            if(val > 0) {
-                document.getElementById('incValue').value = '';
-                transactions.unshift({ date: new Date().toLocaleDateString('pt-BR'), desc, value: val });
-                updateFinanceUI();
-                await syncToCloud("TRANSACTION", { desc, value: val });
-            }
-        };
-    }
-
-    const btnAddExp = document.getElementById('btnAddExpense');
-    if(btnAddExp) {
-        btnAddExp.onclick = async () => {
-            const val = parseFloat(document.getElementById('expValue').value);
-            const desc = document.getElementById('expCategory').value;
-            if(val > 0) {
-                document.getElementById('expValue').value = '';
-                transactions.unshift({ date: new Date().toLocaleDateString('pt-BR'), desc, value: -val });
-                updateFinanceUI();
-                await syncToCloud("TRANSACTION", { desc, value: -val });
-            }
-        };
-    }
-
     function updateFinanceUI() {
         const total = transactions.reduce((acc, t) => acc + t.value, 0);
         const display = document.getElementById('displayBalance');
@@ -181,14 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(el) el.style.display = 'none';
                 });
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                
                 const targetView = document.getElementById(views[idx]);
                 if(targetView) targetView.style.display = 'block';
-                
                 btn.classList.add('active');
-                
-                const titleEl = document.getElementById('pageTitle');
-                if(titleEl) titleEl.innerText = navId.replace('nav', '').toUpperCase();
             };
         }
     });
@@ -209,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <h4 class="row-name">${user.name}</h4>
                         <span class="role-badge">${user.role}</span>
-                        <span class="id-display">#${user.idForm || 'Sem ID'}</span>
+                        <span class="id-display">#${user.idForm || 'ID'}</span>
                     </div>
                 </div>
                 <div class="row-status-col">
@@ -224,57 +191,40 @@ document.addEventListener('DOMContentLoaded', () => {
             list.appendChild(row);
         });
         
-        const countEl = document.getElementById('totalCount');
-        if(countEl) countEl.innerText = mediators.length;
-        
-        const alertEl = document.getElementById('alertCount');
-        if(alertEl) alertEl.innerText = mediators.filter(m => m.daysLeft <= 0).length;
+        if(document.getElementById('totalCount')) document.getElementById('totalCount').innerText = mediators.length;
+        if(document.getElementById('alertCount')) document.getElementById('alertCount').innerText = mediators.filter(m => m.daysLeft <= 0).length;
     }
 
-    // --- 8. EVENTOS DE CLIQUE (LIXEIRA COM BLOQUEIO) ---
+    // --- 8. EVENTOS DE CLIQUE (LIXEIRA E EDIÇÃO) ---
     const listContainer = document.getElementById('mediatorList');
     if (listContainer) {
         listContainer.addEventListener('click', async (e) => {
-            
-            const btnRenovar = e.target.closest('.btn-renovar');
-            if (btnRenovar) {
-                const u = mediators.find(m => m.id == btnRenovar.dataset.id);
-                if(u) { u.daysLeft = parseInt(u.daysLeft || 0) + 7; renderMediators(); await syncToCloud("UPDATE_EQUIPE"); }
-                return;
-            }
+            const id = e.target.closest('button')?.dataset.id;
+            if(!id) return;
+            const u = mediators.find(m => m.id == id);
 
-            const btnCargo = e.target.closest('.btn-cargo');
-            if (btnCargo) {
-                const u = mediators.find(m => m.id == btnCargo.dataset.id);
-                if(u) {
-                    const novo = prompt("Novo Cargo:", u.role);
-                    if(novo) { u.role = novo.toUpperCase(); renderMediators(); await syncToCloud("UPDATE_EQUIPE"); }
+            if (e.target.closest('.btn-renovar')) {
+                u.daysLeft = parseInt(u.daysLeft || 0) + 7;
+                renderMediators();
+                await syncToCloud("UPDATE_EQUIPE");
+            } else if (e.target.closest('.btn-cargo')) {
+                const novo = prompt("Novo Cargo:", u.role);
+                if(novo) { u.role = novo.toUpperCase(); renderMediators(); await syncToCloud("UPDATE_EQUIPE"); }
+            } else if (e.target.closest('.btn-excluir')) {
+                if(confirm(`Deseja EXCLUIR e bloquear ${u.name}?`)) {
+                    const deletedName = u.name;
+                    mediators = mediators.filter(m => m.id != id);
+                    renderMediators();
+                    await syncToCloud("DELETE_MEMBER", { name: deletedName });
                 }
-                return;
-            }
-
-            const btnExcluir = e.target.closest('.btn-excluir');
-            if (btnExcluir) {
-                const u = mediators.find(m => m.id == btnExcluir.dataset.id);
-                if(u && confirm(`Deseja realmente EXCLUIR e bloquear ${u.name}?`)) {
-                    // Remove da tela na hora
-                    mediators = mediators.filter(m => m.id != btnExcluir.dataset.id);
-                    renderMediators(); 
-                    
-                    // Manda a ordem de Exclusão e Bloqueio pro Google
-                    await syncToCloud("DELETE_MEMBER", { name: u.name });
-                }
-                return;
             }
         });
     }
 
-    // =========================================================
-    // 9. MOTOR AUTOMÁTICO (ATUALIZAÇÃO EM TEMPO REAL)
-    // =========================================================
+    // --- 9. ATUALIZAÇÃO AUTOMÁTICA (15s) ---
     setInterval(() => {
         if (localStorage.getItem('sysIsLoggedIn') === 'true') {
             loadData();
         }
-    }, 15000); // Checa novidades no Google a cada 15 segundos
+    }, 15000);
 });
