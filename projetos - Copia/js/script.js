@@ -1,38 +1,49 @@
+// =========================================================================
+// URL DE CONEXÃO DEFINITIVA
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzbJJ7eTembJFbAaBxI7aFCo87lN_-RBIsb5HYgapo1YpEMCVcKSUlGza_tOGPzG9tAQw/exec";
+// =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     let mediators = [];
     let transactions = [];
     let termoPesquisa = "";
 
-    // --- 1. TRAVA ANTI-DUPLICATA ---
+    const loginScreen = document.getElementById('loginScreen');
+    const appScreen = document.getElementById('appScreen');
+    const editModal = document.getElementById('editModal');
+    const addModal = document.getElementById('addModal');
+
+    // --- 1. TRAVA ANTI-REPETIÇÃO ---
     function removerDuplicatas(lista) {
         const nomesVistos = new Set();
         return lista.filter(m => {
-            const nome = (m.name || "").toLowerCase().trim();
-            if (nomesVistos.has(nome)) return false;
-            nomesVistos.add(nome);
+            const nomeUnico = (m.name || "").toLowerCase().trim();
+            if (nomesVistos.has(nomeUnico)) return false;
+            nomesVistos.add(nomeUnico);
             return true;
         });
     }
 
     // --- 2. LOGIN ---
     if (localStorage.getItem('sysIsLoggedIn') === 'true') {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display = 'block';
+        if(loginScreen) loginScreen.style.display = 'none';
+        if(appScreen) appScreen.style.display = 'block';
         loadData();
     }
 
-    document.getElementById('btnLogin').onclick = () => {
-        const u = document.getElementById('loginUser').value;
-        const p = document.getElementById('loginPass').value;
-        if ((u === 'admin' && p === 'admin') || (u === 'pedro' && p === 'mestre')) {
-            localStorage.setItem('sysIsLoggedIn', 'true');
-            location.reload();
-        } else {
-            document.getElementById('loginError').style.display = 'block';
-        }
-    };
+    const btnLogin = document.getElementById('btnLogin');
+    if(btnLogin) {
+        btnLogin.onclick = () => {
+            const u = document.getElementById('loginUser').value;
+            const p = document.getElementById('loginPass').value;
+            if ((u === 'admin' && p === 'admin') || (u === 'pedro' && p === 'mestre')) {
+                localStorage.setItem('sysIsLoggedIn', 'true');
+                location.reload();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        };
+    }
 
     document.getElementById('btnLogout').onclick = () => {
         if(confirm("Sair do sistema?")) {
@@ -47,14 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(URL_PLANILHA, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
             if (data.equipe) {
+                // Aplica a trava anti-clone ao carregar
                 mediators = removerDuplicatas(data.equipe);
                 transactions = data.financeiro || [];
                 renderAll();
             }
-        } catch (e) { console.log("Erro ao carregar dados."); }
+        } catch (e) { console.log("Erro ao carregar banco."); }
     }
 
-    // --- 4. PESQUISA ---
+    // --- 4. BARRA DE PESQUISA ---
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -76,7 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtrados.forEach(user => {
             const cargo = (user.role || "").toUpperCase();
-            const isIlimitado = cargo.includes("SUP") || cargo.includes("AUX");
+            
+            // LÓGICA ILIMITADA: SUPORTE E AUXILIAR
+            const isIlimitado = cargo.includes("SUPORTE") || cargo.includes("AUXILIAR") || cargo.includes("SUP") || cargo.includes("AUX");
             const isExp = !isIlimitado && (parseInt(user.daysLeft) <= 0);
 
             const textoTempo = isIlimitado ? "ILIMITADO" : (isExp ? "EXPIRADO" : user.daysLeft + " dias");
@@ -96,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="${corTempo} font-weight-bold">${textoTempo}</span>
                 </div>
                 <div class="row-actions">
-                    <button class="action-btn text-green btn-renovar" data-id="${user.id}">+7</button>
+                    <button class="action-btn text-green btn-renovar" data-id="${user.id}">+7 DIAS</button>
                     <button class="action-btn text-yellow btn-cargo" data-id="${user.id}"><i class="fa-solid fa-pen-to-square"></i></button>
                     <button class="action-btn text-red btn-excluir" data-id="${user.id}"><i class="fa-solid fa-trash"></i></button>
                 </div>`;
@@ -106,36 +120,43 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('totalCount').innerText = filtrados.length;
         document.getElementById('alertCount').innerText = filtrados.filter(m => {
             const c = (m.role || "").toUpperCase();
-            return !c.includes("SUP") && !c.includes("AUX") && m.daysLeft <= 0;
+            const ilim = c.includes("SUPORTE") || c.includes("AUXILIAR") || c.includes("SUP") || c.includes("AUX");
+            return !ilim && m.daysLeft <= 0;
         }).length;
     }
 
     // --- 6. EVENTOS DE CLIQUE ---
-    document.getElementById('mediatorList').onclick = async (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        const id = btn.dataset.id;
-        const u = mediators.find(m => m.id == id);
+    const listContainer = document.getElementById('mediatorList');
+    if (listContainer) {
+        listContainer.onclick = async (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            const u = mediators.find(m => m.id == id);
+            if (!u) return;
 
-        if (btn.classList.contains('btn-renovar')) {
-            u.daysLeft = parseInt(u.daysLeft || 0) + 7;
-            renderMediators();
-            await syncToCloud("UPDATE_EQUIPE");
-        } else if (btn.classList.contains('btn-cargo')) {
-            document.getElementById('editUserId').value = u.id;
-            document.getElementById('editName').value = u.name;
-            document.getElementById('editRole').value = u.role;
-            document.getElementById('editDays').value = u.daysLeft;
-            document.getElementById('editModal').style.display = 'flex';
-        } else if (btn.classList.contains('btn-excluir')) {
-            if(confirm(`Excluir ${u.name}?`)) {
-                const n = u.name;
-                mediators = mediators.filter(m => m.id != id);
+            if (btn.classList.contains('btn-renovar')) {
+                u.daysLeft = parseInt(u.daysLeft || 0) + 7;
                 renderMediators();
-                await syncToCloud("DELETE_MEMBER", { name: n });
+                await syncToCloud("UPDATE_EQUIPE");
+            } 
+            else if (btn.classList.contains('btn-cargo')) {
+                document.getElementById('editUserId').value = u.id;
+                document.getElementById('editName').value = u.name;
+                document.getElementById('editRole').value = u.role;
+                document.getElementById('editDays').value = u.daysLeft;
+                editModal.style.display = 'flex';
+            } 
+            else if (btn.classList.contains('btn-excluir')) {
+                if(confirm(`Excluir e bloquear ${u.name}?`)) {
+                    const nome = u.name;
+                    mediators = mediators.filter(m => m.id != id);
+                    renderMediators();
+                    await syncToCloud("DELETE_MEMBER", { name: nome });
+                }
             }
-        }
-    };
+        };
+    }
 
     // Salvar do Modal
     document.getElementById('btnSaveEdit').onclick = async () => {
@@ -145,27 +166,29 @@ document.addEventListener('DOMContentLoaded', () => {
             u.name = document.getElementById('editName').value;
             u.role = document.getElementById('editRole').value;
             u.daysLeft = document.getElementById('editDays').value;
-            document.getElementById('editModal').style.display = 'none';
+            editModal.style.display = 'none';
             renderMediators();
             await syncToCloud("UPDATE_EQUIPE");
         }
     };
 
-    // Abrir modal novo
-    document.getElementById('btnAddNewDesktop').onclick = () => document.getElementById('addModal').style.display = 'flex';
+    // Modais Novo e fechar
+    document.getElementById('btnAddNewDesktop').onclick = () => addModal.style.display = 'flex';
+    document.getElementById('fabAddUser').onclick = () => addModal.style.display = 'flex';
     document.querySelectorAll('.close-modal').forEach(b => b.onclick = () => {
-        document.getElementById('editModal').style.display = 'none';
-        document.getElementById('addModal').style.display = 'none';
+        editModal.style.display = 'none';
+        addModal.style.display = 'none';
     });
 
-    // --- 7. COMUNICAÇÃO ---
+    // --- 7. SINCRONIA ---
     async function syncToCloud(type, extraData = null) {
+        // Trava final antes de enviar
         const listaLimpa = removerDuplicatas(mediators);
         let body = { type, data: listaLimpa };
         if (type === "DELETE_MEMBER") body = { type, deletedName: extraData.name, data: listaLimpa };
         try {
             await fetch(URL_PLANILHA, { method: 'POST', body: JSON.stringify(body) });
-        } catch(e) { console.log("Erro ao sincronizar."); }
+        } catch(e) { console.log("Erro de sincronia."); }
     }
 
     // Navegação de abas
@@ -192,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSyncDrive').onclick = async () => {
         document.getElementById('btnSyncDrive').innerText = "SINCRONIZANDO...";
         await loadData();
-        document.getElementById('btnSyncDrive').innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> SINCRONIZAR';
+        document.getElementById('btnSyncDrive').innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> SINCRONIZAR FORMS';
     };
 
     setInterval(() => { if (localStorage.getItem('sysIsLoggedIn') === 'true') loadData(); }, 20000);
