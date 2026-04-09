@@ -2,12 +2,19 @@
     --bg-dark: #1b1915;
     --card-bg: #26211a;
     --primary-gold: #eebc1d;
+    --text-main: #f0f0f0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    background-color: var(--bg-dark);
+    background: var(--bg-dark);
     font-family: 'Roboto', sans-serif;
-    color: #fff;
+    color: var(--text-main);
 }
 
 /* LOGIN */
@@ -34,6 +41,8 @@ body {
     width: 100%;
     margin: 10px 0;
     padding: 10px;
+    border-radius: 6px;
+    border: none;
 }
 
 .save-btn {
@@ -42,6 +51,7 @@ body {
     background: var(--primary-gold);
     border: none;
     cursor: pointer;
+    font-weight: bold;
 }
 
 /* LAYOUT */
@@ -51,14 +61,25 @@ body {
 }
 
 .side-nav {
-    width: 200px;
+    width: 220px;
     background: #0d0b08;
     padding: 20px;
 }
 
+.nav-brand {
+    color: var(--primary-gold);
+    font-family: 'Cinzel', serif;
+    margin-bottom: 20px;
+}
+
 .nav-item {
-    padding: 10px;
+    padding: 12px;
     cursor: pointer;
+    color: #777;
+}
+
+.nav-item.active {
+    color: var(--primary-gold);
 }
 
 .content-area {
@@ -66,24 +87,56 @@ body {
     padding: 20px;
 }
 
+/* HEADER */
+header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.app-title {
+    font-family: 'Cinzel', serif;
+    color: var(--primary-gold);
+}
+
+/* SEARCH */
+.search-container {
+    display: flex;
+    background: var(--card-bg);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.search-container input {
+    background: transparent;
+    border: none;
+    color: white;
+    margin-left: 10px;
+    width: 100%;
+}
+
 /* LISTA */
 .table-row {
     background: var(--card-bg);
+    border: 1px solid #3e362a;
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 10px;
     margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 .row-info {
     display: flex;
+    align-items: center;
     gap: 10px;
 }
 
 .row-avatar {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
 }
 
@@ -96,17 +149,24 @@ body {
 }
 
 .badge-adm { color: gold; }
-.badge-sup { color: purple; }
+.badge-sup { color: violet; }
 .badge-aux { color: cyan; }
 
 .days-count {
     font-size: 18px;
+    font-weight: bold;
 }
 
 .action-btn {
     margin-left: 10px;
     cursor: pointer;
+    background: none;
+    border: none;
 }
 
 .text-red { color: red; }
 .text-yellow { color: gold; }
+
+.footer {
+    margin-top: 20px;
+}
