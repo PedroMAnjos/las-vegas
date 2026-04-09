@@ -3,127 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnjoW - Gestão de Elite</title>
+    <title>AnjoW SS | High-End Admin</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <section id="loginScreen" class="login-wrapper">
-        <div class="login-box">
-            <div class="login-logo"><i class="fa-solid fa-shield-halved"></i></div>
-            <h1 class="app-title">Painel Admin</h1>
-            <p style="color:#888; font-size:0.8rem; margin-bottom:30px;">Acesso Restrito - Dev. Pedro Mestre</p>
-            <div class="input-group">
-                <label>Usuário</label>
-                <input type="text" id="loginUser" class="custom-input" placeholder="admin">
+    <section id="loginScreen" class="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fa-solid fa-shield-halved gold-icon"></i>
+                <h1>ANJOW SS</h1>
+                <p>Security Terminal v4.0</p>
             </div>
-            <div class="input-group">
-                <label>Senha</label>
-                <input type="password" id="loginPass" class="custom-input" placeholder="admin">
+            <div class="auth-body">
+                <div class="input-container">
+                    <label>OPERADOR</label>
+                    <input type="text" id="loginUser" placeholder="admin">
+                </div>
+                <div class="input-container">
+                    <label>CHAVE DE ACESSO</label>
+                    <input type="password" id="loginPass" placeholder="••••••••">
+                </div>
+                <button id="btnLogin" class="btn-gold-full">AUTENTICAR</button>
+                <div id="loginError" class="error-msg">Acesso Negado: Credenciais Inválidas.</div>
             </div>
-            <button id="btnLogin" class="save-btn">ACESSAR SISTEMA</button>
-            <p id="loginError" style="color:var(--alert-red); display:none; margin-top:15px;">Credenciais inválidas.</p>
         </div>
     </section>
 
-    <div id="appScreen" style="display: none;">
-        <div class="main-layout">
-            <nav class="side-nav">
-                <div class="nav-brand"><i class="fa-solid fa-crown"></i><span>ADMIN</span></div>
-                <div class="nav-item active" id="navMediators" data-view="viewMediators"><i class="fa-solid fa-users"></i><span>EQUIPE</span></div>
-                <div class="nav-item" id="navDashboard" data-view="viewDashboard"><i class="fa-solid fa-calculator"></i><span>FINANCEIRO</span></div>
-                <div class="nav-item" id="navReports" data-view="viewReports"><i class="fa-solid fa-file-contract"></i><span>RELATÓRIOS</span></div>
-                <div class="nav-item logout-btn" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i><span>SAIR</span></div>
+    <div id="appScreen" class="app-shell" style="display: none;">
+        
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-crown"></i>
+                <span>ADMIN</span>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-item active" id="navEquipe" data-view="viewMediators">
+                        <i class="fa-solid fa-users-gear"></i><span>EQUIPE</span>
+                    </div>
+                    <div class="nav-item" id="navFinanceiro" data-view="viewFinance">
+                        <i class="fa-solid fa-vault"></i><span>FINANCEIRO</span>
+                    </div>
+                    <div class="nav-item" id="navRelatorios" data-view="viewReports">
+                        <i class="fa-solid fa-file-invoice"></i><span>RELATÓRIOS</span>
+                    </div>
+                </div>
+                <button id="btnLogout" class="btn-exit">
+                    <i class="fa-solid fa-right-from-bracket"></i><span>SAIR</span>
+                </button>
             </nav>
+        </aside>
 
-            <main class="content-area">
-                <header class="main-header">
-                    <h1 class="app-title" id="pageTitle">EQUIPE</h1>
-                    <div class="header-actions">
-                        <span class="user-name">Administrador Sênior</span>
-                        <div class="avatar-small"><img src="https://i.pravatar.cc/150?img=11"></div>
+        <main class="workspace">
+            <header class="workspace-header">
+                <div class="title-area">
+                    <h2 id="pageTitle">GESTÃO DE EQUIPE</h2>
+                    <span id="liveClock">00:00:00</span>
+                </div>
+                <div class="admin-profile">
+                    <div class="admin-info">
+                        <span class="admin-name">Pedro Mestre dos Anjos</span>
+                        <span class="admin-tag">Master Developer</span>
                     </div>
-                </header>
+                    <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="admin-photo">
+                </div>
+            </header>
 
-                <div id="viewMediators" class="view-section">
-                    <div class="desktop-controls">
-                        <div class="search-container">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="searchInput" placeholder="Pesquisar por nome ou cargo...">
-                        </div>
-                        <div class="btn-group">
-                            <button class="action-btn blue" id="btnSyncDrive"><i class="fa-solid fa-rotate"></i> SYNC</button>
-                            <button class="action-btn green" id="btnExportCSV"><i class="fa-solid fa-file-excel"></i> CSV</button>
-                            <button class="action-btn gold" id="btnAddNew"><i class="fa-solid fa-plus"></i> NOVO</button>
-                        </div>
+            <section id="viewMediators" class="view-content active">
+                <div class="top-controls">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" placeholder="Filtrar membros por nome ou cargo...">
                     </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-label">TOTAL EQUIPE</span>
-                            <span class="stat-number" id="totalCount">0</span>
-                        </div>
-                        <div class="stat-card alert">
-                            <span class="stat-label">STATUS ALERTA</span>
-                            <span class="stat-number" id="alertCount">0</span>
-                        </div>
-                    </div>
-
-                    <div class="list-container">
-                        <div class="list-header-row">
-                            <span>MEMBRO / CARGO</span>
-                            <span style="text-align: center;">TEMPO RESTANTE</span>
-                            <span style="text-align: right;">AÇÕES</span>
-                        </div>
-                        <div id="mediatorList"></div>
+                    <div class="action-btns">
+                        <button id="btnSync" class="btn-action blue"><i class="fa-solid fa-rotate"></i> SYNC</button>
+                        <button id="btnCSV" class="btn-action green"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                        <button id="btnNew" class="btn-action gold"><i class="fa-solid fa-plus"></i> NOVO</button>
                     </div>
                 </div>
 
-                <div id="viewDashboard" class="view-section" style="display:none;">
-                    <div class="balance-container">
-                        <span class="balance-label">SALDO EM CAIXA</span>
-                        <h1 id="displayBalance" class="balance-value">R$ 0,00</h1>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <label>EFETIVO TOTAL</label>
+                        <h3 id="totalCount">0</h3>
                     </div>
-                    <div class="finance-controls">
-                        <div class="fin-row income-group">
-                            <select id="incCategory" class="fin-select">
-                                <option value="Contratação">Contratação</option>
-                                <option value="Renovação">Renovação</option>
-                            </select>
-                            <input type="number" id="incValue" class="fin-input-small" placeholder="0,00">
-                            <button id="btnAddIncome" class="btn-fin-round income"><i class="fa-solid fa-plus"></i></button>
+                    <div class="stat-card danger-glow">
+                        <label>ALERTAS DE ACESSO</label>
+                        <h3 id="alertCount">0</h3>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-head">
+                        <span class="col-main">MEMBRO / CARGO</span>
+                        <span class="col-status">TEMPO RESTANTE</span>
+                        <span class="col-actions">GERENCIAMENTO</span>
+                    </div>
+                    <div id="mediatorList" class="table-body">
                         </div>
-                    </div>
-                    <div id="transactionList" class="transaction-list"></div>
                 </div>
+            </section>
 
-                <div id="viewReports" class="view-section" style="display:none;">
-                    <div class="section-header">
-                        <h2>FECHAMENTO FINANCEIRO</h2>
-                    </div>
-                    <div id="reportsList"></div>
+            <section id="viewFinance" class="view-content" style="display: none;">
+                <div class="balance-hero">
+                    <label>SALDO ATUAL EM CAIXA</label>
+                    <h1 id="displayBalance">R$ 0,00</h1>
                 </div>
-            </main>
-        </div>
+            </section>
+        </main>
+    </div>
 
-        <div id="editModal" class="modal">
-            <div class="modal-content">
+    <div id="editModal" class="modal-backdrop">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-pen"></i> EDITAR MEMBRO</h3>
                 <span class="close-modal">&times;</span>
-                <h2 class="text-gold">Editar Membro</h2>
+            </div>
+            <div class="modal-body">
                 <input type="hidden" id="editUserId">
-                <div class="input-group"><label>Nome</label><input type="text" id="editName" class="custom-input"></div>
-                <div class="input-group">
-                    <label>Cargo</label>
-                    <select id="editRole" class="custom-input">
-                        <option value="ADM">ADM</option>
-                        <option value="SUPORTE">SUPORTE</option>
-                        <option value="AUXILIAR">AUXILIAR</option>
-                    </select>
+                <div class="form-group">
+                    <label>NOME COMPLETO</label>
+                    <input type="text" id="editName" class="gold-input">
                 </div>
-                <div class="input-group"><label>Dias</label><input type="number" id="editDays" class="custom-input"></div>
-                <button id="btnSaveEdit" class="save-btn">SALVAR ALTERAÇÕES</button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CARGO</label>
+                        <select id="editRole" class="gold-input">
+                            <option value="ADM">ADMINISTRADOR</option>
+                            <option value="SUP">SUPORTE</option>
+                            <option value="AUX">AUXILIAR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>DIAS</label>
+                        <input type="number" id="editDays" class="gold-input">
+                    </div>
+                </div>
+                <button id="btnSaveEdit" class="btn-save">ATUALIZAR CREDENCIAIS</button>
             </div>
         </div>
     </div>
