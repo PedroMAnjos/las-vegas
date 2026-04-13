@@ -27,7 +27,7 @@ Responsividade: Design mobile-first com navegação inferior intuitiva e janelas
 
 Biblioteca de Ícones: Integração com Font Awesome para uma experiência visual rica.
 
-#  Tecnologias Utilizadas
+# Tecnologias Utilizadas
 HTML5: Estrutura semântica do painel.
 
 CSS3: Estilização avançada com variáveis, Flexbox, Grid e animações de feedback visual.
