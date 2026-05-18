@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Partículas Premium em Background -->
+    <canvas id="particles-bg"></canvas>
+
+    <div id="loginScreen" class="login-wrapper">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h1 class="app-title login-title">Painel Admin</h1>
+            <p style="color:#888; font-size:0.8rem; margin-bottom:30px;">Coded By AnjoW</p>
+            
+            <div class="input-group">
+                <label>Usuário</label>
+                <input type="text" id="loginUser" class="custom-input" placeholder="admin">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="loginPass" class="custom-input" placeholder="senha">
+            </div>
+            
+            <button id="btnLogin" class="save-btn btn-login">ACESSAR SISTEMA</button>
+            <p id="loginError" class="login-error">Credenciais inválidas.</p>
+        </div>
+    </div>
+
+    <div id="appScreen" class="app-layout" style="display: none;">
+        
+        <!-- Sidebar / Bottom Nav -->
+        <nav class="bottom-nav">
+            <div class="nav-brand-desktop">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div class="nav-links">
+                <div class="nav-item" id="navDashboard"><i class="fa-solid fa-calculator"></i><span>FINANCEIRO</span></div>
+                <div class="nav-item active" id="navMediators"><i class="fa-solid fa-users"></i><span>MEDIADORES</span></div>
+                <div class="nav-item" id="navReports"><i class="fa-solid fa-file-contract"></i><span>RELATÓRIOS</span></div>
+                <div class="nav-item" id="navLogs"><i class="fa-solid fa-list-check"></i><span>LOGS</span></div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header>
+                <div class="header-left">
+                    <i class="fa-solid fa-bars menu-icon"></i>
+                    <h1 class="app-title" id="pageTitle">PAINEL ADMIN</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn text-green" id="btnExportJSON" title="Baixar JSON">
+                        <i class="fa-solid fa-file-export"></i>
+                    </button>
+                    <button class="icon-btn text-red" id="btnLogout" title="Sair">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                    <div class="avatar-small"><img src="https://i.pravatar.cc/150?img=11" alt="Perfil"></div>
+                </div>
+            </header>
+
+            <div id="viewMediators">
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" placeholder="Buscar mediador..." id="searchInput">
+                </div>
+                
+                <div class="filter-tabs">
+                    <button class="tab active" data-filter="all">TODOS</button>
+                    <button class="tab" data-filter="active">ATIVOS</button>
+                    <button class="tab" data-filter="expiring">VENCENDO</button>
+                    <button class="tab" data-filter="expired">EXPIRADOS</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">TOTAL MEDIADORES</span>
+                        <span class="stat-number" id="totalCount">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label text-gold">STATUS ALERTA</span>
+                        <span class="stat-number text-red" id="alertCount">0</span>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>MONITORAMENTO</h2>
+                    <span class="online-count">Tempo Real</span>
+                </div>
+
+                <div class="mediator-list card-list" id="mediatorList"></div>
+            </div>
+
+            <div id="viewDashboard" style="display: none;">
+                <div class="finance-desktop-grid">
+                    <div class="balance-container">
+                        <span class="balance-label"><i class="fa-solid fa-vault"></i> SALDO EM CAIXA</span>
+                        <h1 class="balance-value" id="displayBalance">R$ 0,00</h1>
+                    </div>
+
+                    <div class="finance-controls">
+                        <div class="fin-row income-group">
+                            <div class="fin-col-sel">
+                                <label>Entrada</label>
+                                <select id="incCategory" class="fin-select">
+                                    <option value="Contratação">Contratação</option>
+                                    <option value="Renovação">Renovação</option>
+                                    <option value="Divulgação">Divulgação</option>
+                                </select>
+                            </div>
+                            <div class="fin-col-val"><label>Valor</label><input type="number" id="incValue" class="fin-input-small" placeholder="0,00"></div>
+                            <button id="btnAddIncome" class="btn-fin-round income"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div class="fin-row expense-group">
+                            <div class="fin-col-sel">
+                                <label>Saída</label>
+                                <select id="expCategory" class="fin-select">
+                                    <option value="Pagamento">Pagamento</option>
+                                    <option value="Divulgação">Divulgação</option>
+                                    <option value="Bot">Bot</option>
+                                    <option value="Evento">Evento</option>
+                                </select>
+                            </div>
+                            <div class="fin-col-val"><label>Valor</label><input type="number" id="expValue" class="fin-input-small" placeholder="0,00"></div>
+                            <button id="btnAddExpense" class="btn-fin-round expense"><i class="fa-solid fa-minus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>EXTRATO</h2>
+                    <span class="online-count" id="transCount">0 registros</span>
+                </div>
+                <div class="transaction-list" id="transactionList"></div>
+            </div>
+
+            <div id="viewReports" style="display: none;">
+                <div class="section-header">
+                    <h2>FECHAMENTO SEMANAL</h2>
+                    <span class="online-count">Domingo a Sábado</span>
+                </div>
+                <div id="reportsList" class="reports-container"></div>
+            </div>
+
+            <div id="viewLogs" style="display: none;">
+                <div class="section-header">
+                    <h2>AUDITORIA DE SISTEMA</h2>
+                    <span class="online-count" id="logCount">0 registros</span>
+                </div>
+                <div class="transaction-list" id="logList"></div>
+            </div>
+            
+            <div class="spacer-bottom"></div>
+            <button class="fab" id="fabAddUser"><i class="fa-solid fa-plus"></i></button>
+        </main>
+
+        <!-- MODALS RECONSTRUÍDOS -->
+        <!-- Modal de Visualização de Dados -->
+        <div id="dataModal" class="modal">
+            <div class="modal-content modal-content-scroll" style="max-width: 750px;">
+                <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
+                <h2 id="modalDataTitle" class="modal-title-gold">Ficha do Mediador</h2>
+                <p class="modal-subtitle">Visualização de dados estruturados</p>
+                
+                <div class="data-view-grid" id="viewDataGrid">
+                    <!-- Preenchido via JS -->
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="btnCopyData" class="save-btn" style="margin-top: 0; flex: 2;"><i class="fa-solid fa-copy"></i> COPIAR DADOS</button>
+                    <button id="btnEditFromView" class="reset-btn" style="margin-top: 0; flex: 1; border-color: var(--primary-gold); color: var(--primary-gold);"><i class="fa-solid fa-pen"></i> EDITAR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Autenticação do Operador (Prof) -->
+        <div id="authCodeModal" class="modal" style="background-color: var(--bg-dark);">
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <i class="fa-solid fa-fingerprint" style="font-size: 3rem; color: var(--primary-gold); margin-bottom: 15px;"></i>
+                <h2 class="modal-title-gold">VALIDAÇÃO OPERACIONAL</h2>
+                <p class="modal-subtitle">Digite seu código HASH operacional.</p>
+                <div class="input-group">
+                    <input type="text" id="opCode" class="custom-input" placeholder="Ex: A7F9-K2P1-X9D2" style="text-align: center; letter-spacing: 2px; text-transform: uppercase;" required>
+                </div>
+                <p id="hashError" class="login-error" style="display: none; margin-top: -10px; margin-bottom: 15px;">Acesso Negado: HASH inválido.</p>
+                <button id="btnVerifyOp" class="save-btn"><i class="fa-solid fa-unlock"></i> Autenticar Operador</button>
+            </div>
+        </div>
+
+        <!-- Formulário Modal Único (Add / Edit) -->
+        <div id="formModal" class="modal">
+            <div class="modal-content modal-content-scroll" style="max-width: 800px;">
+                <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
+                <h2 id="formModalTitle" class="modal-title-gold">Novo Mediador</h2>
+                <p class="modal-subtitle">Preencha os dados manualmente</p>
+                <input type="hidden" id="formUserId">
+                
+                <div class="form-section">
+                    <h3 class="form-section-title"><i class="fa-solid fa-user"></i> DADOS PESSOAIS</h3>
+                    <div class="form-grid col-3">
+                        <div class="input-group form-col-full"><label>Nome Completo *</label><input type="text" id="fNome" class="custom-input" placeholder="Ex: João da Silva" required></div>
+                        <div class="input-group"><label>CPF *</label><input type="text" id="fCpf" class="custom-input mask-cpf" placeholder="000.000.000-00" required></div>
+                        <div class="input-group"><label>RG *</label><input type="text" id="fRg" class="custom-input" placeholder="Apenas números e letras" required></div>
+                        <div class="input-group"><label>Data de Nascimento</label><input type="text" id="fNasc" class="custom-input mask-date" placeholder="DD/MM/AAAA"></div>
+                        <div class="input-group form-col-full"><label>Naturalidade (Cidade/UF)</label><input type="text" id="fNat" class="custom-input" placeholder="Ex: São Paulo/SP"></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title"><i class="fa-solid fa-people-arrows"></i> FILIAÇÃO</h3>
+                    <div class="form-grid">
+                        <div class="input-group"><label>Nome da Mãe</label><input type="text" id="fMae" class="custom-input"></div>
+                        <div class="input-group"><label>Nome do Pai</label><input type="text" id="fPai" class="custom-input"></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title"><i class="fa-solid fa-id-card"></i> DOCUMENTO</h3>
+                    <div class="form-grid col-3">
+                        <div class="input-group"><label>Órgão Emissor</label><input type="text" id="fOrgao" class="custom-input" placeholder="Ex: SSP, DETRAN"></div>
+                        <div class="input-group"><label>Estado (UF)</label><input type="text" id="fUf" class="custom-input" placeholder="Ex: SP" maxlength="2" style="text-transform: uppercase;"></div>
+                        <div class="input-group"><label>Data de Emissão</label><input type="text" id="fEmissao" class="custom-input mask-date" placeholder="DD/MM/AAAA"></div>
+                        <div class="input-group"><label>Validade</label><input type="text" id="fValidade" class="custom-input mask-date" placeholder="DD/MM/AAAA"></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title"><i class="fa-solid fa-address-book"></i> CONTATO</h3>
+                    <div class="form-grid">
+                        <div class="input-group form-col-full"><label>Telefone / WhatsApp</label><input type="text" id="fTel" class="custom-input mask-phone" placeholder="(00) 00000-0000"></div>
+                    </div>
+                </div>
+
+                <div class="form-section" id="formSectionSystem">
+                    <h3 class="form-section-title"><i class="fa-solid fa-gear"></i> SISTEMA</h3>
+                    <div class="form-grid col-3">
+                        <div class="input-group"><label>Data de Entrada</label><input type="text" id="fEntry" class="custom-input mask-date" placeholder="DD/MM/AAAA"></div>
+                        <div class="input-group"><label>Dias de Acesso</label><input type="number" id="fDays" class="custom-input" placeholder="Ex: 30"></div>
+                        <div class="input-group"><label>Status da Conta</label>
+                            <select id="fStatus" class="custom-input" style="height: 52px; padding: 0 15px;">
+                                <option value="active">🟢 Ativo</option>
+                                <option value="expiring">🟡 Vencendo</option>
+                                <option value="expired">🔴 Expirado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title"><i class="fa-solid fa-comment-dots"></i> OBSERVAÇÕES</h3>
+                    <div class="input-group">
+                        <textarea id="fObs" class="custom-input" placeholder="Informações adicionais relevantes..." style="height: 100px; resize: vertical; padding: 15px; font-family: 'Roboto', sans-serif;"></textarea>
+                    </div>
+                </div>
+
+                <button id="btnSaveForm" class="save-btn"><i class="fa-solid fa-floppy-disk"></i> Salvar Mediador</button>
+            </div>
+        </div>
+
+        <!-- Lightbox -->
+        <div id="imageViewer" class="lightbox">
+            <span class="close-lightbox"><i class="fa-solid fa-xmark"></i></span>
+            <img id="fullImage" class="lightbox-content" src="" alt="Zoom">
+        </div>
+
+    </div>
+
+    <script src="js/particles.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
