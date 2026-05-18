@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentSession = null;
 
-     // Engine Híbrida de Autenticação (Backend API c/ Fallback Local e Debug)
+    // Engine Híbrida de Autenticação (Supabase c/ Fallback Local e Debug Extremo)
     const AuthService = {
         async getSession() {
             console.log("=== [AUTH DEBUG] getSession() INICIADO ===");
@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("[AUTH DEBUG] USERNAME DIGITADO:", username);
             
             try {
-                // Tenta fazer o login real usando o seu Backend no Vercel
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -71,11 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return data.session;
                 
             } catch (e) {
-                // Se a API falhar (sem internet, backend offline, etc) cai aqui
                 console.warn("[AUTH DEBUG] Login na API falhou. Iniciando Fallback Local...", e);
             }
 
-            // Fallback Local (Simulação de Banco de Dados de Emergência)
             return new Promise((resolve, reject) => {
                 setTimeout(() => { // Simula delay de rede (800ms)
                     let tenant = null; let role = null;
@@ -98,14 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         async logout() {
-            console.log("=== [AUTH DEBUG] SOLICITANDO LOGOUT ===");
-            localStorage.removeItem('sysSession');
-            localStorage.removeItem('sysToken');
-            localStorage.removeItem('sysTempToken');
-            window.location.replace('/'); // Previne cache back/forward do navegador
-        }
-    };
-
             console.log("=== [AUTH DEBUG] SOLICITANDO LOGOUT ===");
             localStorage.removeItem('sysSession');
             localStorage.removeItem('sysToken');
@@ -553,8 +542,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.btn-edit').forEach(b => b.onclick = () => openEdit(parseInt(b.dataset.id)));
         document.querySelectorAll('.btn-rm').forEach(b => b.onclick = () => {
             if(confirm('Tem certeza que deseja remover este usuário permanentemente?')) {
+                const u = mediators.find(m => m.id === parseInt(b.dataset.id));
                 if (u) logAction('EXCLUIR', `Mediador Removido: ${u.name}`);
-                mediators = mediators.filter(m => m.id !== u.id);
+                mediators = mediators.filter(m => m.id !== parseInt(b.dataset.id));
                 saveData();
             }
         });
