@@ -8,6 +8,8 @@ const rateLimit = require('express-rate-limit');
 require('./src/cron/cleanupLogs');
 
 const authRoutes = require('./src/routes/authRoutes');
+const supabase = require('./src/config/supabase');
+const authMiddleware = require('./src/middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +29,34 @@ app.use('/api/', limiter);
 
 // Inicialização de Rotas
 app.use('/api/auth', authRoutes);
+
+// ==========================================
+// ROTAS DE SINCRONIZAÇÃO DE DADOS (BANCO DE DADOS)
+// ==========================================
+app.get('/api/sync', authMiddleware, async (req, res) => {
+    try {
+        const { data } = await supabase.from('mediators').select('extracted_data').eq('tenant_id', req.user.tenant_id);
+        const mediators = data ? data.map(d => d.extracted_data) : [];
+        res.json({ mediators });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/sync', authMiddleware, async (req, res) => {
+    try {
+        const { mediators } = req.body;
+        // Sincronização Bulk: Limpa os antigos e atualiza com a lista nova
+        await supabase.from('mediators').delete().eq('tenant_id', req.user.tenant_id);
+        if (mediators && mediators.length > 0) {
+            const inserts = mediators.map(m => ({ tenant_id: req.user.tenant_id, extracted_data: m }));
+            await supabase.from('mediators').insert(inserts);
+        }
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor Backend SaaS iniciado na porta ${PORT}`);
