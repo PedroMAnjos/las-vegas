@@ -62,10 +62,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ username, password })
             });
             
-            const data = await response.json();
+            const text = await response.text();
+            let data;
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch (e) {
+                console.error("[AUTH DEBUG] Resposta inválida do servidor:", text);
+                throw new Error(`Resposta inválida do servidor (Status: ${response.status}).`);
+            }
             
             if (!response.ok) {
-                throw new Error(data.error || "Falha na comunicação com o servidor. Verifique sua conexão.");
+                throw new Error(data.error || "Falha na comunicação com o servidor.");
             }
             
             if (data.requireHash) {
@@ -284,7 +291,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ hash: code })
                 });
 
-                const data = await response.json();
+                const text = await response.text();
+                let data;
+                try {
+                    data = text ? JSON.parse(text) : {};
+                } catch (e) {
+                    throw new Error(`Resposta inválida do servidor (Status: ${response.status}).`);
+                }
+                
                 if (!response.ok) throw new Error(data.error || "HASH inválido ou inativo.");
 
                 localStorage.setItem('sysToken', data.token);
@@ -364,8 +378,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
-                    const dbData = await response.json();
-                    mediators = dbData.mediators.length > 0 ? dbData.mediators : JSON.parse(JSON.stringify(initialMediators));
+                    const text = await response.text();
+                    try {
+                        const dbData = text ? JSON.parse(text) : { mediators: [] };
+                        mediators = (dbData.mediators && dbData.mediators.length > 0) ? dbData.mediators : JSON.parse(JSON.stringify(initialMediators));
+                    } catch (e) {
+                        console.error("[SYNC] Resposta não-JSON do banco:", text);
+                        mediators = JSON.parse(JSON.stringify(initialMediators));
+                    }
                 } else {
                     console.error("[SYNC] Falha ao baixar dados do banco.");
                     mediators = JSON.parse(JSON.stringify(initialMediators));
@@ -375,8 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const resLogs = await fetch('/api/logs', { headers: { 'Authorization': `Bearer ${token}` } });
                     if (resLogs.ok) {
-                        const logsData = await resLogs.json();
-                        systemLogs = logsData.logs.map(l => {
+                        const text = await resLogs.text();
+                        const logsData = text ? JSON.parse(text) : { logs: [] };
+                        systemLogs = (logsData.logs || []).map(l => {
                             const d = new Date(l.created_at);
                             return {
                                 id: l.id,
@@ -406,8 +427,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const finRes = await fetch('/api/finance', { headers: { 'Authorization': `Bearer ${token}` } });
                         if (finRes.ok) {
-                            const finData = await finRes.json();
-                            transactions = finData.transactions && finData.transactions.length > 0 ? finData.transactions : [];
+                            const text = await finRes.text();
+                            const finData = text ? JSON.parse(text) : { transactions: [] };
+                            transactions = (finData.transactions && finData.transactions.length > 0) ? finData.transactions : [];
                         } else {
                             const storedFin = localStorage.getItem(`sysFinance_${tenantKey}`);
                             transactions = storedFin ? JSON.parse(storedFin) : [];
