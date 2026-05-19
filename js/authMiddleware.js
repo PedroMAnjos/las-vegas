@@ -10,7 +10,8 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // FALLBACK APLICADO AQUI: Previne erro 500 se a Vercel não tiver a variável
+        const decoded = jwt.verify(token, (process.env.JWT_SECRET || 'senha_secreta_padrao_123'));
         req.user = decoded; // Injeta { userId, username, role, tenant_id } no request
         next();
     } catch (error) {

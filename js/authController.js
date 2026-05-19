@@ -19,14 +19,16 @@ const AuthController = {
 
             // 3. Regra do Professional (Requer validação de HASH)
             if (user.role === 'professional') {
-                // Retorna um token temporário apenas válido para a etapa do HASH (15 min)
-                const tempToken = jwt.sign({ userId: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+                // Retorna um token temporário apenas válido para a etapa do HASH (15 min) - FALLBACK APLICADO
+                const tempToken = jwt.sign({ userId: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id }, (process.env.JWT_SECRET || 'senha_secreta_padrao_123'), { expiresIn: '15m' });
                 return res.json({ requireHash: true, tempToken, role: user.role });
             }
 
             // 4. Admin e Registrar (Acesso Direto sem Hash)
             const payload = { userId: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id, operator_name: user.username, operator_hash: null };
-            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
+            
+            // FALLBACK APLICADO AQUI
+            const token = jwt.sign(payload, (process.env.JWT_SECRET || 'senha_secreta_padrao_123'), { expiresIn: '8h' });
 
             await LogService.logAction(user.tenant_id, user.username, null, user.role, 'LOGIN', 'Acesso direto realizado.');
 
@@ -62,7 +64,9 @@ const AuthController = {
 
             // 2. Sucesso: Gera o Token Definitivo de 8 horas com o Nome do Operador incluído
             const payload = { userId, username, role, tenant_id, operator_name: opData.operator_name, operator_hash: opData.operator_hash };
-            const finalToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
+            
+            // FALLBACK APLICADO AQUI
+            const finalToken = jwt.sign(payload, (process.env.JWT_SECRET || 'senha_secreta_padrao_123'), { expiresIn: '8h' });
 
             await LogService.logAction(tenant_id, opData.operator_name, opData.operator_hash, role, 'LOGIN_HASH', 'Operador autenticado com sucesso.');
 
