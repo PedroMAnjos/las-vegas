@@ -12,6 +12,10 @@ const authMiddleware = require('./authMiddleware');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Avisa ao Express que está rodando atrás de um proxy (Vercel)
+// Isso resolve o erro do express-rate-limit e permite identificar o IP real do usuário
+app.set('trust proxy', 1);
+
 // Proteções de Segurança
 app.use(helmet());
 app.use(cors());
