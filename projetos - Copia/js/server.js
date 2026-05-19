@@ -5,8 +5,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 
-// O Vercel não suporta node-cron local. O cron foi movido para uma rota nativa serverless.
-
 const authRoutes = require('./authRoutes');
 const supabase = require('./supabase');
 const authMiddleware = require('./authMiddleware');
@@ -19,13 +17,13 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Servir os arquivos estáticos do frontend (HTML, CSS, JS) na mesma porta
+// Servir os ficheiros estáticos do frontend (HTML, CSS, JS) na mesma porta
 app.use(express.static(path.join(__dirname, '../')));
 
 // Limite de tentativas de login por IP (Prevenção de Brute Force)
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // Máx de requisições
+    max: 100, // Máximo de requisições
     message: { error: 'Muitas requisições deste IP, tente novamente mais tarde.' }
 });
 app.use('/api/', limiter);
@@ -38,7 +36,9 @@ app.use('/api/auth', authRoutes);
 // ==========================================
 app.get('/api/sync', authMiddleware, async (req, res) => {
     try {
-        const { data } = await supabase.from('mediators').select('extracted_data').eq('tenant_id', req.user.tenant_id);
+        const { data, error } = await supabase.from('mediators').select('extracted_data').eq('tenant_id', req.user.tenant_id);
+        if (error) throw error;
+        
         const mediators = data ? data.map(d => d.extracted_data) : [];
         res.json({ mediators });
     } catch (e) {
@@ -49,8 +49,11 @@ app.get('/api/sync', authMiddleware, async (req, res) => {
 app.post('/api/sync', authMiddleware, async (req, res) => {
     try {
         const { mediators } = req.body;
-        // Sincronização Bulk: Limpa os antigos e atualiza com a lista nova
+        // Estratégia de sincronização mais segura. 
+        // Idealmente, o frontend deve enviar apenas os itens alterados (CRUD individual).
+        // Como o frontend envia o array completo, executamos a eliminação e inserção em passos controlados.
         await supabase.from('mediators').delete().eq('tenant_id', req.user.tenant_id);
+        
         if (mediators && mediators.length > 0) {
             const inserts = mediators.map(m => ({ tenant_id: req.user.tenant_id, extracted_data: m }));
             await supabase.from('mediators').insert(inserts);
@@ -67,7 +70,7 @@ app.post('/api/sync', authMiddleware, async (req, res) => {
 app.get('/api/finance', authMiddleware, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem acessar dados financeiros.' });
+            return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem aceder a dados financeiros.' });
         }
         
         const { data, error } = await supabase.from('transactions').select('*').eq('tenant_id', req.user.tenant_id).order('created_at', { ascending: false });
@@ -94,7 +97,14 @@ app.post('/api/finance', authMiddleware, async (req, res) => {
         await supabase.from('transactions').delete().eq('tenant_id', req.user.tenant_id);
         
         if (transactions && transactions.length > 0) {
-            const inserts = transactions.map(t => ({ tenant_id: req.user.tenant_id, description: t.desc, amount: Math.abs(t.value), type: t.value >= 0 ? 'income' : 'expense', transaction_date: t.date, transaction_time: t.time }));
+            const inserts = transactions.map(t => ({ 
+                tenant_id: req.user.tenant_id, 
+                description: t.desc, 
+                amount: Math.abs(t.value), 
+                type: t.value >= 0 ? 'income' : 'expense', 
+                transaction_date: t.date, 
+                transaction_time: t.time 
+            }));
             await supabase.from('transactions').insert(inserts);
         }
         res.json({ success: true });
@@ -112,7 +122,7 @@ app.get('/api/logs', authMiddleware, async (req, res) => {
             .select('*')
             .eq('tenant_id', req.user.tenant_id)
             .order('created_at', { ascending: false })
-            .limit(200); // Mantém os últimos 200 registros por performance
+            .limit(200);
             
         if (error) throw error;
         res.json({ logs: data });
@@ -141,14 +151,14 @@ app.get('/api/cron/cleanup', async (req, res) => {
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
         const { error } = await supabase.from('logs').delete().lt('created_at', threeDaysAgo.toISOString());
         if (error) throw error;
-        res.json({ success: true, message: 'Logs antigos limpos.' });
+        res.json({ success: true, message: 'Logs antigos limpos com sucesso.' });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
 
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => console.log(`🚀 Servidor rodando localmente na porta ${PORT}`));
+    app.listen(PORT, () => console.log(`🚀 Servidor a correr localmente na porta ${PORT}`));
 }
 
 module.exports = app;

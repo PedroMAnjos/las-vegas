@@ -11,14 +11,15 @@
 // PWA - SERVICE WORKER REGISTRATION
 // ==========================================
 if ('serviceWorker' in navigator) {
-    // 1. Destrói o Service Worker antigo preso na memória
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-        for (let registration of registrations) {
-            registration.unregister();
-            console.log('[PWA] Service Worker antigo desativado para limpeza de cache.');
-        }
-    });
-    // 2. Instala a nova versão
+    navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => {
+            console.log('[PWA] Service Worker registado com sucesso.');
+        })
+        .catch(err => {
+            console.error('[PWA] Erro ao registar Service Worker:', err);
+        });
+
+        // 2. Instala a nova versão
     navigator.serviceWorker.register('/service-worker.js').then(reg => {
         reg.update();
         console.log('[PWA] Novo Service Worker registrado.');
@@ -633,11 +634,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let desc, val, inputEl;
         if (type === 'income') {
             desc = incCategory ? incCategory.value : 'Entrada';
-            val = parseFloat(incValue ? incValue.value : 0);
+            // O replace garante que as vírgulas são lidas como decimais
+            val = parseFloat(incValue ? incValue.value.replace(',', '.') : 0);
             inputEl = incValue;
         } else {
             desc = expCategory ? expCategory.value : 'Saída';
-            val = parseFloat(expValue ? expValue.value : 0);
+            val = parseFloat(expValue ? expValue.value.replace(',', '.') : 0);
             inputEl = expValue;
         }
 
