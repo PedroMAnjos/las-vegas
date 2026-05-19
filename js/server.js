@@ -17,9 +17,6 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Servir os ficheiros estáticos do frontend (HTML, CSS, JS) na mesma porta
-app.use(express.static(path.join(__dirname, '../')));
-
 // Limite de tentativas de login por IP (Prevenção de Brute Force)
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
