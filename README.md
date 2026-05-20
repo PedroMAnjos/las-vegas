@@ -42,7 +42,12 @@ Plaintext
 │   └── script.js     # Lógica de login, mediadores e finanças
 └── home.html          # Estrutura principal e modais do sistema
 
+link de acesso 
+
+https://las-vegas-beryl.vercel.app/
+
 🔑 Credenciais de Acesso
+
 Usuário: pedro
 
 Senha: mestre
